@@ -1,0 +1,12 @@
+.pio/
+.vscode/
+.DS_Store
+*.pyc
+*.o
+*.elf
+*.bin
+*.hex
+*.map
+*.su
+/.cache/
+/firmware/
