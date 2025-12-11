@@ -7,13 +7,11 @@
 #include "message.h"
 #include "helper.h"
 
-#define LITTLEFS LittleFS
-
 //################ Configure Display elelments ###############################
 //{width,hight, posx, posy, textalign, sprite, value} 
 int offset_x = 25;
 int offset_y = 10;
-display_element display_elements[]= {
+DisplayElement display_elements[]= {
 //{  w,  h, px, py,a, sprite,   v }
   { 76, 38, 92 + offset_x, 20 + offset_y,2,&TWOD,"12"}, //RPML 
   { 76, 38,246 + offset_x, 20 + offset_y,2,&TWOD,"34"}, //RPMR
@@ -42,21 +40,19 @@ display_element display_elements[]= {
   { 18, 18,736 + offset_x,105 + offset_y,1,&TAG,"R"}, //R Tag
 };
 
-
 //################ Create sprites ###############################
-
 
 //Create a sprite for each possible pointer nozzel pointer position from an image, located within LITTLEFS and store it in Psram
 //additionl sprites for scale and scale numbers as well as a blank sprite
-void create_image_sprite(){
+void createImageSprite() {
   int j = 0;
   //Left Nozzel White 
   for (int i = 0; i <= 120; i += 10){
     String filename = "/White/L" + String(i) + ".bmp";
     NOZL_IMAGE[j].setPsram(true);
     NOZL_IMAGE[j].setColorDepth(24);
-    NOZL_IMAGE[j].createFromBmp(LITTLEFS, filename.c_str());
-    
+    NOZL_IMAGE[j].createFromBmp(LittleFS, filename.c_str());
+ 
     j++;
   }
   //Left Nozzel Green
@@ -64,7 +60,7 @@ void create_image_sprite(){
     String filename = "/Green/L" + String(i) + ".bmp";
     NOZL_IMAGE[j].setPsram(true);
     NOZL_IMAGE[j].setColorDepth(24);
-    NOZL_IMAGE[j].createFromBmp(LITTLEFS, filename.c_str());
+    NOZL_IMAGE[j].createFromBmp(LittleFS, filename.c_str());
     j++;
   }
   //Black sprite to hide nozzel gauge
@@ -79,7 +75,7 @@ void create_image_sprite(){
     String filename = "/White/R" + String(k) + ".bmp";
     NOZR_IMAGE[j].setPsram(true);
     NOZR_IMAGE[j].setColorDepth(24);
-    NOZR_IMAGE[j].createFromBmp(LITTLEFS,filename.c_str());
+    NOZR_IMAGE[j].createFromBmp(LittleFS,filename.c_str());
     j++;
   }
   
@@ -88,7 +84,7 @@ void create_image_sprite(){
     String filename = "/Green/R" + String(k) + ".bmp";
     NOZR_IMAGE[j].setPsram(true);
     NOZR_IMAGE[j].setColorDepth(24);
-    NOZR_IMAGE[j].createFromBmp(LITTLEFS,filename.c_str());
+    NOZR_IMAGE[j].createFromBmp(LittleFS,filename.c_str());
     j++;
   }
   //Black sprite to hide nozzel gauge
@@ -96,48 +92,47 @@ void create_image_sprite(){
   NOZR_IMAGE[j].setColorDepth(24);
   NOZR_IMAGE[j].createSprite(display_elements[NOZR].sprite_width, display_elements[NOZR].sprite_hight);
   NOZR_IMAGE[j].fillScreen(0x000000U);
-  
 }
 
 //create sprites for digital display areas and text lables; Fonts loaded from littlefs
-void create_display_elements(){
- create_image_sprite();
-  
+void createDisplayElements() {
+  createImageSprite();
+
   TWOD.createSprite(display_elements[RPML].sprite_width, display_elements[RPML].sprite_hight);
-  TWOD.loadFont(LITTLEFS,"/Fonts/IFEI-Data-36.vlw");
+  TWOD.loadFont(LittleFS,"/Fonts/IFEI-Data-36.vlw");
   TWOD.setFont(TWOD.getFont());
   TWOD.setColorDepth(24);
   TWOD.setTextWrap(false);
   TWOD.setTextColor(ifei_color);
     
   THREED.createSprite(display_elements[TMPL].sprite_width, display_elements[TMPL].sprite_hight);
-  THREED.loadFont(LITTLEFS,"/Fonts/IFEI-Data-36.vlw");
+  THREED.loadFont(LittleFS,"/Fonts/IFEI-Data-36.vlw");
   THREED.setFont(THREED.getFont());
   THREED.setColorDepth(24);
   THREED.setTextWrap(false);
   THREED.setTextColor(ifei_color);
     
   LABELS.createSprite(display_elements[RPMT].sprite_width, display_elements[RPMT].sprite_hight);
-  LABELS.loadFont(LITTLEFS,"/Fonts/IFEI-Labels-16.vlw");
+  LABELS.loadFont(LittleFS,"/Fonts/IFEI-Labels-16.vlw");
   LABELS.setFont(LABELS.getFont());
   LABELS.setColorDepth(24);
   LABELS.setTextColor(ifei_color);
   
   CLOCK.createSprite(display_elements[CLOCKU].sprite_width, display_elements[CLOCKU].sprite_hight);
-  CLOCK.loadFont(LITTLEFS,"/Fonts/IFEI-Data-32.vlw");
+  CLOCK.loadFont(LittleFS,"/Fonts/IFEI-Data-32.vlw");
   CLOCK.setFont(CLOCK.getFont());
   CLOCK.setColorDepth(24);
   CLOCK.setTextWrap(false);
   CLOCK.setTextColor(ifei_color);
   
   TAG.createSprite(display_elements[ZULU].sprite_width, display_elements[ZULU].sprite_hight);
-  TAG.loadFont(LITTLEFS,"/Fonts/IFEI-Labels-16.vlw");
+  TAG.loadFont(LittleFS,"/Fonts/IFEI-Labels-16.vlw");
   TAG.setFont(LABELS.getFont());
   TAG.print(display_elements[NOZT].value);
 
 
   Fuel.createSprite(display_elements[FUELU].sprite_width, display_elements[FUELU].sprite_hight);
-  Fuel.loadFont(LITTLEFS,"/Fonts/IFEI-Data-36.vlw");
+  Fuel.loadFont(LittleFS,"/Fonts/IFEI-Data-36.vlw");
   Fuel.setFont(Fuel.getFont());
   Fuel.setColorDepth(24);
   Fuel.setTextWrap(false);
@@ -145,31 +140,29 @@ void create_display_elements(){
 }
 
 //Align text within it's sprite. 
-//alignment 0=left; 1=middle; 2=right  
-int set_textalignment(int element,int alignment){
-  if (alignment == 2){ 
-      return (display_elements[element].sprite_width - display_elements[element].sprite->textWidth(display_elements[element].value)); 
-  }else if (alignment == 1){
-    return (display_elements[element].sprite_width - display_elements[element].sprite->textWidth(display_elements[element].value))/2;
-  }else{  
-      return 0;
-  
+//alignment 0=left; 1=middle; 2=right
+int setTextAlignment(int element, int alignment) {
+  if (alignment == 2) {
+    return (display_elements[element].sprite_width - display_elements[element].sprite->textWidth(display_elements[element].value));
+  } else if (alignment == 1) {
+    return (display_elements[element].sprite_width - display_elements[element].sprite->textWidth(display_elements[element].value)) / 2;
+  } else {
+    return 0;
   }
 }
 
 // Update digital and label sprites and print them on the screen
-void update_element(int element){
-  int x1 = set_textalignment(element, display_elements[element].textalign);
+void updateElement(int element) {
+  int x1 = setTextAlignment(element, display_elements[element].textalign);
   display_elements[element].sprite->clear();
-  display_elements[element].sprite->setCursor(x1,0);
+  display_elements[element].sprite->setCursor(x1, 0);
   display_elements[element].sprite->setTextColor(ifei_color);
   display_elements[element].sprite->print(display_elements[element].value);
-  display_elements[element].sprite->pushSprite(display_elements[element].pos_x,display_elements[element].pos_y);
-  
+  display_elements[element].sprite->pushSprite(display_elements[element].pos_x, display_elements[element].pos_y);
 }
 
 // Update clock sprites and print them on the screem
-void update_Clock(int element){
+void updateClock(int element) {
   String H;
   String DP1;
   String M;
@@ -230,111 +223,172 @@ void update_Clock(int element){
   display_elements[element].sprite->pushSprite(display_elements[element].pos_x,display_elements[element].pos_y);
 }
 
-void show_demo(){
-    if (!reset){
-      reset = true;
-      tft.fillScreen(0x000000U);
-      ifei_color = color_day;
-      NOZL_IMAGE[11].pushSprite(&tft,display_elements[NOZL].pos_x,display_elements[NOZL].pos_y,0x000000U);
-      NOZL_IMAGE[12].pushSprite(&tft,display_elements[NOZL].pos_x,display_elements[NOZL].pos_y,0x000000U);
-      NOZR_IMAGE[11].pushSprite(&tft,display_elements[NOZR].pos_x,display_elements[NOZR].pos_y,0x000000U);
-      NOZR_IMAGE[12].pushSprite(&tft,display_elements[NOZR].pos_x,display_elements[NOZR].pos_y,0x000000U);
-      
-      for (int i=0; i < 25; i++){
-        if ( i != NOZL && i != NOZR && i != CLOCKU && i != CLOCKL){
-          update_element(i);
-        }
-      }
-      update_Clock(CLOCKL);
-      update_Clock(CLOCKU);
-    } 
- 
-     if (millis() - nozzle_update > 1000){
-      NOZL_IMAGE[demo_counter].pushSprite(&tft,display_elements[NOZL].pos_x,display_elements[NOZL].pos_y,0x000000U);  
-      NOZR_IMAGE[demo_counter].pushSprite(&tft,display_elements[NOZR].pos_x,display_elements[NOZR].pos_y,0x000000U);    
-      nozzle_update = millis();
-      if ( demo_forward ){
-        if ( demo_counter == 10){
-          demo_forward = false;
-          demo_counter--;
-        }else {
-          demo_counter++;
-        }
-      }else{
-        if (demo_counter == 0){
-          demo_forward = true;
-          demo_counter++;
-        }else{
-          demo_counter--;
-        }
-      }
-      if ( TC_S.toInt() < 9 ){
-        TC_S = "0" + String(TC_S.toInt() + 1);
-      }else{
-        TC_S = String(TC_S.toInt() + 1);
-      }
-      
-      if ( TC_S == "60" ){
-         if ( TC_M.toInt() < 9 ){
-          TC_M = "0" + String(TC_M.toInt() + 1);
-         }else{
-          TC_M = String(TC_M.toInt() + 1);
-         }
-        TC_S = "00";
-      }
-      if ( TC_M == "60" ){
-        if (TC_H == "24" ){
-          TC_H == "00";
-        }else{
-         if ( TC_H.toInt() < 9 ){
-          TC_H = "0" + String(TC_H.toInt() + 1);
-         }else{
-          TC_H = String(TC_H.toInt() + 1);
-         }
-        }
-         TC_M = "00";
-      }
-        
-      update_Clock(CLOCKU);
+void renderNozzleLeft(IfeiMessage message) {
+  int colormode = 0; // TODO: make colormode configurable
+  int value = map(message.extNozzlePosL, 0, 65535, 0, 100);
+  switch (value) {
+  case 0 ... 4:
+    strcpy(display_elements[NOZL].value, "0");
+    break;
+  case 5 ... 14:
+    strcpy(display_elements[NOZL].value, "1");
+    break;
+  case 15 ... 24:
+    strcpy(display_elements[NOZL].value, "2");
+    break;
+  case 25 ... 34:
+    strcpy(display_elements[NOZL].value, "3");
+    break;
+  case 35 ... 44:
+    strcpy(display_elements[NOZL].value, "4");
+    break;
+  case 45 ... 54:
+    strcpy(display_elements[NOZL].value, "5");
+    break;
+  case 55 ... 64:
+    strcpy(display_elements[NOZL].value, "6");
+    break;
+  case 65 ... 74:
+    strcpy(display_elements[NOZL].value, "7");
+    break;
+  case 75 ... 84:
+    strcpy(display_elements[NOZL].value, "8");
+    break;
+  case 85 ... 94:
+    strcpy(display_elements[NOZL].value, "9");
+    break;
+  case 95 ... 100:
+    strcpy(display_elements[NOZL].value, "10");
+    break;
+  }
+  display_elements[NOZL].sprite = &NOZL_IMAGE[atoi(display_elements[NOZL].value) + colormode];
+  if (message.lPointerTex == 1) {
+    display_elements[NOZL].sprite->pushSprite( display_elements[NOZL].pos_x, display_elements[NOZL].pos_y, 0x000000U);
   }
 }
 
-// ---- Heartbeat state (updated by ESP-NOW callback, consumed in loop) ----
-static volatile bool gotHb = false;
-static volatile uint32_t lastHbMs = 0;
-static volatile uint16_t lastSeq = 0;
+void renderNozzleRight(IfeiMessage message) {
+  int colormode = 0; // TODO: make colormode configurable
+  int value = map(message.extNozzlePosR, 0, 65535, 0, 100);
+  switch (value) {
+  case 0 ... 4:
+    strcpy(display_elements[NOZR].value, "0");
+    break;
+  case 5 ... 14:
+    strcpy(display_elements[NOZR].value, "1");
+    break;
+  case 15 ... 24:
+    strcpy(display_elements[NOZR].value, "2");
+    break;
+  case 25 ... 34:
+    strcpy(display_elements[NOZR].value, "3");
+    break;
+  case 35 ... 44:
+    strcpy(display_elements[NOZR].value, "4");
+    break;
+  case 45 ... 54:
+    strcpy(display_elements[NOZR].value, "5");
+    break;
+  case 55 ... 64:
+    strcpy(display_elements[NOZR].value, "6");
+    break;
+  case 65 ... 74:
+    strcpy(display_elements[NOZR].value, "7");
+    break;
+  case 75 ... 84:
+    strcpy(display_elements[NOZR].value, "8");
+    break;
+  case 85 ... 94:
+    strcpy(display_elements[NOZR].value, "9");
+    break;
+  case 95 ... 100:
+    strcpy(display_elements[NOZR].value, "10");
+    break;
+  }
+  display_elements[NOZR].sprite = &NOZR_IMAGE[atoi(display_elements[NOZR].value) + colormode];
+  if (message.rPointerTex == 1) {
+    display_elements[NOZR].sprite->pushSprite( display_elements[NOZR].pos_x, display_elements[NOZR].pos_y, 0x000000U);
+  }
+}
+
+void renderIfeiMessage(IfeiMessage message) {
+  renderNozzleLeft(message);
+  renderNozzleRight(message);
+
+  TC_H = String(message.clockH);
+  if (TC_H == "0") {
+    TC_H = "00";
+  } else if (TC_H.toInt() < 10) {
+    TC_H = "0" + TC_H;
+  }
+  TC_M = String(message.clockM);
+  if (TC_M == "0") {
+    TC_M = "00";
+  } else if (TC_M.toInt() < 10) {
+    TC_M = "0" + TC_M;
+  }
+  TC_S = String(message.clockS);
+  if (TC_S == "0") {
+    TC_S = "00";
+  } else if (TC_S.toInt() < 10) {
+    TC_S = "0" + TC_S;
+  }
+  updateClock(CLOCKU);
+}
+
+IfeiMessage lastMessage = {};
+static volatile uint32_t lastMessageMs = 0;
 
 static void onEspNowRecv(const uint8_t* mac, const uint8_t* data, int len) {
-  if (len != (int)sizeof(Message)) return;
+  if (len < (int)sizeof(MessageHeader)) {
+    return;
+  }
 
-  Message m;
-  memcpy(&m, data, sizeof(m));
-  if (m.type != 1) return;
+  const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
+  switch (hdr->category) {
+  case MessageCategory::IFEI:
+    if (len != (int)sizeof(IfeiMessage)) {
+      return;
+    }
+    lastMessage = *reinterpret_cast<const IfeiMessage *>(data);
+    break;
+  case MessageCategory::Common:
+    if (len != (int)sizeof(Message)) {
+      return;
+    }
+    // auto *msg = reinterpret_cast<const Message *>(data);
+    // TODO
+    break;
+  default:
+    // ignore
+    return;
+  }
 
-  lastSeq = m.seq;
-  lastHbMs = millis();
-  gotHb = true;
+  lastMessageMs = millis();
 }
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
-  WiFi.disconnect(true);
 
   if (esp_now_init() != ESP_OK) {
-    while (true) delay(1000);
+    Serial.println("ESP-NOW init failed");
+    return;
   }
 
   esp_now_register_recv_cb(onEspNowRecv);
 }
 
 void setup() {
+  Serial.begin(115200);
+
   tft.begin();
 
-  if (!LITTLEFS.begin(true)) {
+  if (!LittleFS.begin(true)) {
+    Serial.println("An Error has occurred while mounting LITTLEFS");
     return;
   }
 
-  create_display_elements();
+  createDisplayElements();
   tft.setColorDepth(24);
   tft.fillScreen(0x000000U);
 
@@ -344,20 +398,8 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
 
-  // If no heartbeat for 2 seconds -> NO DATA
-  if (now - (uint32_t)lastHbMs > 2000) {
-    static uint32_t lastDraw = 0;
-    if (now - lastDraw > 250) {
-      lastDraw = now;
-      TC_S = String(lastSeq % 60);
-      update_Clock(CLOCKU);
-    }
-    return;
-  }
-  if (!ishornet) {
-    show_demo();
-  } else if (reset) {
-    tft.fillScreen(0x000000U);
-    reset = false;
+  if (now - (uint32_t)lastMessageMs > 100) {
+    lastMessageMs = now;
+    renderIfeiMessage(lastMessage);
   }
 }

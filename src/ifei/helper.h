@@ -37,14 +37,8 @@ bool NOZR_numbers_visible = true;
 // lighting test switch active
 bool test_switch_enabled = false;
 
-
 //Aircraft 
 bool ishornet = false;
-// demo variables
-unsigned long nozzle_update = 0;
-bool demo_forward = true;
-bool reset = false;
-int demo_counter = 0;
 
 // Create tft screen 
 LGFX tft;
@@ -56,73 +50,30 @@ LGFX_Sprite THREED(&tft); // Data digits sprite (TEMP/FF)
 LGFX_Sprite LABELS(&tft); // Text label sprite 
 LGFX_Sprite ffT(&tft);    // Special text sprite label for fuel flow
 LGFX_Sprite Fuel(&tft);   //Fuel sprite
-LGFX_Sprite CLOCK(&tft);  //Clock sprite 
+LGFX_Sprite CLOCK(&tft);  //Clock sprite
 
-LGFX_Sprite NOZL_IMAGE[27] //Left nozzel gauge sprites
-{ LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft)
-  };
-  
-LGFX_Sprite NOZR_IMAGE[27] //Right nozzel gauge sprites
-{
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft),
-  LGFX_Sprite(&tft)
-};
+LGFX_Sprite NOZL_IMAGE[27] // Left nozzel gauge sprites
+    {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
+
+LGFX_Sprite NOZR_IMAGE[27] // Right nozzel gauge sprites
+    {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
+     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
 
 LGFX_Sprite TAG(&tft); //Special Tags sprite (L/R/Z)
 
 // Create data structure for display elements
-struct display_element{
+struct DisplayElement {
   int sprite_width;
   int sprite_hight;
   int pos_x;
@@ -133,7 +84,7 @@ struct display_element{
 };
 
 // Enumeration of display elements
-enum Display_Name{
+enum DisplayName {
   RPML,
   RPMR,
   RPMT,
@@ -158,28 +109,7 @@ enum Display_Name{
   CLOCKL,
   ZULU,
   L,
-  R
+  R,
 };
-
-// Functions
-bool copy_and_trim_spaces(const char* src, char* dest) {
-  size_t outSize = 8;
-  if (!dest) return false;
-  dest[0] = '\0';
-  if (!src) return false;
-
-  while (*src && std::isspace((unsigned char)*src)) src++;
-  if (!*src) return false;
-
-  const char* end = src + std::strlen(src);
-  while (end > src && std::isspace((unsigned char)end[-1])) end--;
-
-  size_t n = (size_t)(end - src);
-  if (n >= outSize) n = outSize - 1;
-
-  std::memcpy(dest, src, n);
-  dest[n] = '\0';
-  return true;
-}
 
 #endif
