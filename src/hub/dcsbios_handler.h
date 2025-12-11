@@ -80,9 +80,9 @@ uint8_t parseU8(const char *s) {
 //################## Light Modes  ##################
 
 void onCockkpitLightModeSwChange(unsigned int newValue) {
-  // TODO: implement if needed
+  // TODO: other common message other than IFEI
+  ifei.colorMode = newValue;
 }
-
 DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MODE_SW, onCockkpitLightModeSwChange);
 
 //=============================== IFEI  ===============================
@@ -293,17 +293,17 @@ void onIfeiClockSChange(char* newValue) {
 }
 DcsBios::StringBuffer<2> ifeiClockSBuffer(FA_18C_hornet_IFEI_CLOCK_S_A, onIfeiClockSChange);
 
-/*
 //Colon 1
 void onIfeiDd1Change(char* newValue) {
+  ifei.dd1 = (uint8_t)newValue[0];
 }
 DcsBios::StringBuffer<1> ifeiDd1Buffer(FA_18C_hornet_IFEI_DD_1_A, onIfeiDd1Change);
 
 //Colon 2
 void onIfeiDd2Change(char* newValue) {
-DcsBios::StringBuffer<1> ifeiDd2Buffer(FA_18C_hornet_IFEI_DD_2_A, onIfeiDd2Change);
+  ifei.dd2 = (uint8_t)newValue[0];
 }
-*/
+DcsBios::StringBuffer<1> ifeiDd2Buffer(FA_18C_hornet_IFEI_DD_2_A, onIfeiDd2Change);
 
 //Tag Z
 void onIfeiZTextureChange(char* newValue) {
@@ -329,18 +329,18 @@ void onIfeiTimerSChange(char* newValue) {
   ifei.timerS = parseU8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiTimerSBuffer(FA_18C_hornet_IFEI_TIMER_S_A, onIfeiTimerSChange);
-/*
+
 //Colon 1
 void onIfeiDd3Change(char* newValue) {
+  ifei.dd3 = (uint8_t)newValue[0];
 }
 DcsBios::StringBuffer<1> ifeiDd3Buffer(FA_18C_hornet_IFEI_DD_3_A, onIfeiDd3Change);
 
 //Colon 2
 void onIfeiDd4Change(char* newValue) {
+  ifei.dd4 = (uint8_t)newValue[0];
 }
 DcsBios::StringBuffer<1> ifeiDd4Buffer(FA_18C_hornet_IFEI_DD_4_A, onIfeiDd4Change);
-*/
-
 
 //################## Display Brightness ##################
 //Only changes in night mode

@@ -42,7 +42,7 @@ struct __attribute__((packed)) IfeiMessage {
 
   uint16_t bingo;
 
-  uint8_t dd1;
+  uint8_t dd1; // ":"
   uint8_t dd2;
   uint8_t dd3;
   uint8_t dd4;
@@ -92,6 +92,7 @@ struct __attribute__((packed)) IfeiMessage {
   uint8_t zTex;
 
   uint16_t dispIntLt;
+  uint16_t colorMode;
 };
 #pragma pack(pop)
 
