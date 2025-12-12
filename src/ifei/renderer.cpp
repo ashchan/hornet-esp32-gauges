@@ -10,6 +10,7 @@
 const unsigned int COLOR_DAY = 0xFFFFFFU;
 const unsigned int COLOR_NIGHT = 0x1CDD2AU;
 unsigned int ifeiColor = COLOR_DAY;
+unsigned int ifeiBrightness = 0;
 bool forceUpdate = false;
 
 // Create tft screen 
@@ -381,6 +382,12 @@ void renderIfeiMessage(IfeiMessage message) {
   if (color != ifeiColor) {
     ifeiColor = color;
     forceUpdate = true;
+  }
+
+  unsigned int brightness = map(message.dispIntLt, 0, 65535, 0, 255);
+  if (brightness != ifeiBrightness) {
+    ifeiBrightness = brightness;
+    tft.setBrightness(ifeiBrightness);
   }
 
   char value[8];
