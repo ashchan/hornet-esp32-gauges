@@ -88,12 +88,12 @@ DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MO
 //=============================== IFEI  ===============================
 //################## RPM  ##################
 void onIfeiRpmLChange(char* newValue) {
-  ifei.rpmL = parseU16(newValue);
+  ifei.rpmL = parseU8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmLBuffer(FA_18C_hornet_IFEI_RPM_L_A, onIfeiRpmLChange);
 
 void onIfeiRpmRChange(char* newValue) {
-  ifei.rpmR = parseU16(newValue);
+  ifei.rpmR = parseU8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmRBuffer(FA_18C_hornet_IFEI_RPM_R_A, onIfeiRpmRChange);
 
