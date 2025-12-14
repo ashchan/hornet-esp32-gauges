@@ -25,10 +25,6 @@ static void initEspNow() {
   esp_err_t err = esp_now_init();
   //Serial.printf("esp_now_init: %s\n", esp_err_to_name(err));
 
-  esp_now_register_send_cb([](const uint8_t*, esp_now_send_status_t s){
-    //Serial.printf("send_cb: %s\n", esp_err_to_name(s));
-  });
-
   delay(100);
   addPeer(BROADCAST_MAC);
 }
