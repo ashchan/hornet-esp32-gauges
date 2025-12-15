@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <esp_now.h>
-#include <esp_timer.h>
 #include <cstdint>
 
 #include "message.h"
@@ -29,22 +28,20 @@ static void initEspNow() {
   addPeer(BROADCAST_MAC);
 }
 
-static void sendMessage(const Message& m) {
+template<typename T>
+static void sendMessage(const T& m) {
   const uint8_t *dest = BROADCAST_MAC;
   esp_err_t e = esp_now_send(dest, reinterpret_cast<const uint8_t *>(&m), sizeof(m));
   //Serial.printf("esp_now_send %s\n", esp_err_to_name(e));
 }
 
-static void sendIfeiMessage() {
-  const uint8_t *dest = BROADCAST_MAC;
-  ifei.header.category = MessageCategory::IFEI;
-  ifei.header.ms = millis();
-  esp_err_t e = esp_now_send(dest, reinterpret_cast<const uint8_t *>(&ifei), sizeof(ifei));
-  //Serial.printf("esp_now_send %s\n", esp_err_to_name(e));
+static void sendIntegerMessage(ValueName name, uint16_t value) {
+  IntegerMessage m{};
+  m.header.ms = millis();
+  m.name = name;
+  m.value = value;
+  sendMessage(m);
 }
-
-static constexpr uint32_t messageInterval = 250; // ms: XHz max
-static uint32_t lastSendMs = 0;
 
 void setup() {
   DcsBios::setup();
@@ -52,12 +49,85 @@ void setup() {
   delay(300);
 }
 
+static IfeiMessage previousIfei{};
+static AltimeterMessage previousAltimeter{};
+static RadarAltimeterMessage previousRadarAltimeter{};
+static uint16_t previousAirspeed;
+static uint16_t previousVsi;
+static uint16_t previousVoltU;
+static uint16_t previousVoltE;
+static uint16_t previousHydIndBrake;
+static uint16_t previousCabinAltIndicator;
+static uint16_t previousHydPressL;
+static uint16_t previousHydPressR;
+
 void loop() {
   DcsBios::loop();
 
+  static uint32_t messageInterval = 200; // 1000 / messageInterval Hz max
+  static uint32_t lastSendAt = 0;
   const uint32_t now = millis();
-  if ((uint32_t)(now - lastSendMs) >= messageInterval) {
-    lastSendMs = now;
-    sendIfeiMessage();
+  if (now - lastSendAt < messageInterval) {
+    return;
   }
+
+  if (!isEqualIfeiMessage(ifei, previousIfei)) {
+    previousIfei = ifei;
+    previousIfei.header.ms = millis();
+    sendMessage(previousIfei);
+  }
+
+  if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
+    previousAltimeter = altimeter;
+    previousAltimeter.header.ms = millis();
+    sendMessage(previousAltimeter);
+  }
+
+  if (!isEqualRadarAltimeterMessage(radarAltimeter, previousRadarAltimeter)) {
+    previousRadarAltimeter = radarAltimeter;
+    previousRadarAltimeter.header.ms = millis();
+    sendMessage(previousRadarAltimeter);
+  }
+
+  if (airspeed != previousAirspeed) {
+    previousAirspeed = airspeed;
+    sendIntegerMessage(ValueName::Airspeed, airspeed);
+  }
+
+  if (vsi != previousVsi) {
+    previousVsi = vsi;
+    sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
+  }
+
+  if (voltU != previousVoltU) {
+    previousVoltU = voltU;
+    sendIntegerMessage(ValueName::VoltU, voltU);
+  }
+
+  if (voltE != previousVoltE) {
+    previousVoltE = voltE;
+    sendIntegerMessage(ValueName::VoltE, voltE);
+  }
+
+  if (hydIndBrake != previousHydIndBrake) {
+    previousHydIndBrake = hydIndBrake;
+    sendIntegerMessage(ValueName::BrakePressure, hydIndBrake);
+  }
+
+  if (cabinAltIndicator != previousCabinAltIndicator) {
+    previousCabinAltIndicator = cabinAltIndicator;
+    sendIntegerMessage(ValueName::CabinAltitudeIndicator, cabinAltIndicator);
+  }
+
+  if (hydPressL != previousHydPressL) {
+    previousHydPressL = hydPressL;
+    sendIntegerMessage(ValueName::HydraulicPressureLeft, hydPressL);
+  }
+
+  if (hydPressR != previousHydPressR) {
+    previousHydPressR = hydPressR;
+    sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
+  }
+
+  lastSendAt = now;
 }

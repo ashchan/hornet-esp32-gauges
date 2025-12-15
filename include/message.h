@@ -1,36 +1,31 @@
 #pragma once
 
+#include <cstring>
+
 #pragma pack(push, 1)
 enum class MessageCategory : uint8_t {
   Common,
   IFEI,
-  Airspeed,
   Altimeter,
-  AttitudeIndicator,
-  VerticalVelocityIndicator,
   RadarAltimeter,
-  Battery,
-  BrakePressure,
-  CabinPressure,
-  HydraulicPressure,
+  Integer
 };
 
-enum class MessageName : uint8_t;
-const uint8_t MessageDataLimit = 48;
+enum class ValueName : uint8_t;
 
 struct __attribute__((packed)) MessageHeader {
   MessageCategory category;
   uint32_t ms;       // millis() at send time
 };
 
-struct __attribute__((packed)) Message {
-  MessageHeader header;
-  MessageName name;
-  char data[MessageDataLimit];
+struct __attribute__((packed)) IntegerMessage {
+  MessageHeader header{category: MessageCategory::Integer};
+  ValueName name;
+  uint16_t value;
 };
 
 struct __attribute__((packed)) AltimeterMessage {
-  MessageHeader header;
+  MessageHeader header{category: MessageCategory::Altimeter};
 
   uint16_t alt100FtPtr;
   uint16_t alt1000FtCnt;
@@ -41,7 +36,7 @@ struct __attribute__((packed)) AltimeterMessage {
 };
 
 struct __attribute__((packed)) RadarAltimeterMessage {
-  MessageHeader header;
+  MessageHeader header{category: MessageCategory::RadarAltimeter};
 
   uint16_t altPtr;
   uint16_t minHeightPtr;
@@ -51,7 +46,7 @@ struct __attribute__((packed)) RadarAltimeterMessage {
 };
 
 struct __attribute__((packed)) IfeiMessage {
-  MessageHeader header;
+  MessageHeader header{category: MessageCategory::IFEI};
 
   uint8_t clockH;
   uint8_t clockM;
@@ -117,28 +112,34 @@ struct __attribute__((packed)) IfeiMessage {
 };
 #pragma pack(pop)
 
-inline Message makeMessage(MessageCategory category,
-                           MessageName name,
-                           const char* data) {
-  MessageHeader header{};
-  header.category = category;
-  header.ms = millis();
-  Message m{};
-  m.header = header;
-  m.name = name;
+enum class ValueName : uint8_t {
+  Airspeed,
+  VerticalVelocityIndicator,
+  VoltU,
+  VoltE,
+  BrakePressure,
+  CabinAltitudeIndicator,
+  HydraulicPressureLeft,
+  HydraulicPressureRight,
+};
 
-  if (data && *data) {
-    size_t n = strnlen(data, sizeof(m.data));
-    assert(n < MessageDataLimit);
-    memcpy(m.data, data, n);
-  } else {
-    memset(m.data, ' ', sizeof(m.data));
-  }
-
-  return m;
+static bool isEqualAltimeterMessage(const AltimeterMessage& a, const AltimeterMessage& b) {
+  constexpr size_t off = offsetof(AltimeterMessage, alt100FtPtr);
+  return std::memcmp(reinterpret_cast<const uint8_t*>(&a) + off,
+                     reinterpret_cast<const uint8_t*>(&b) + off,
+                     sizeof(AltimeterMessage) - off) == 0;
 }
 
-enum class MessageName: uint8_t {
-  None = 0,
-  Ifei,
-};
+static bool isEqualRadarAltimeterMessage(const RadarAltimeterMessage& a, const RadarAltimeterMessage& b) {
+  constexpr size_t off = offsetof(RadarAltimeterMessage, altPtr);
+  return std::memcmp(reinterpret_cast<const uint8_t*>(&a) + off,
+                     reinterpret_cast<const uint8_t*>(&b) + off,
+                     sizeof(RadarAltimeterMessage) - off) == 0;
+}
+
+static bool isEqualIfeiMessage(const IfeiMessage& a, const IfeiMessage& b) {
+  constexpr size_t off = offsetof(IfeiMessage, clockH);
+  return std::memcmp(reinterpret_cast<const uint8_t*>(&a) + off,
+                     reinterpret_cast<const uint8_t*>(&b) + off,
+                     sizeof(IfeiMessage) - off) == 0;
+}
