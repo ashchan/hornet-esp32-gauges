@@ -76,16 +76,115 @@ uint8_t parseU8(const char *s) {
   return (uint8_t)v;
 }
 
-//=============================== COMMON DATA  ===============================
-//################## Light Modes  ##################
+#pragma region DCS Common Data
+void onAcftNameBufferChange(char* newValue) {
+  if (strcmp(newValue, "FA-18C_hornet") == 0) {
+  } else {
+  }
+}
+DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
 
 void onCockkpitLightModeSwChange(unsigned int newValue) {
   // TODO: other common message other than IFEI
   ifei.colorMode = newValue;
 }
 DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MODE_SW, onCockkpitLightModeSwChange);
+#pragma endregion DCS Common Data
 
-//=============================== IFEI  ===============================
+#pragma region Airspeed
+void onStbyAsiAirspeedChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyAsiAirspeedBuffer(FA_18C_hornet_STBY_ASI_AIRSPEED, onStbyAsiAirspeedChange);
+#pragma endregion Airspeed
+
+#pragma region Altimeter
+void onStbyAlt100FtPtrChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyAlt100FtPtrBuffer(FA_18C_hornet_STBY_ALT_100_FT_PTR, onStbyAlt100FtPtrChange);
+
+void onStbyAlt1000FtCntChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyAlt1000FtCntBuffer(FA_18C_hornet_STBY_ALT_1000_FT_CNT, onStbyAlt1000FtCntChange);
+
+void onStbyAlt10000FtCntChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyAlt10000FtCntBuffer(FA_18C_hornet_STBY_ALT_10000_FT_CNT, onStbyAlt10000FtCntChange);
+void onStbyPressSet0Change(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyPressSet0Buffer(FA_18C_hornet_STBY_PRESS_SET_0, onStbyPressSet0Change);
+
+void onStbyPressSet1Change(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyPressSet1Buffer(FA_18C_hornet_STBY_PRESS_SET_1, onStbyPressSet1Change);
+void onStbyPressSet2Change(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer stbyPressSet2Buffer(FA_18C_hornet_STBY_PRESS_SET_2, onStbyPressSet2Change);
+#pragma endregion Altimeter
+
+#pragma region Vertical Velocity Indicator
+void onVsiChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer vsiBuffer(FA_18C_hornet_VSI, onVsiChange);
+#pragma endregion Vertical Velocity Indicator 
+
+#pragma region Battery Voltage
+void onVoltUChange(unsigned int v) {
+}
+DcsBios::IntegerBuffer voltUBuffer(FA_18C_hornet_VOLT_U, onVoltUChange);
+
+void onVoltEChange(unsigned int v) {
+}
+DcsBios::IntegerBuffer voltEBuffer(FA_18C_hornet_VOLT_E, onVoltEChange);
+#pragma endregion Battery Voltage
+
+#pragma region Brake Pressure
+void onHydIndBrakeChange(unsigned int v) {
+}
+DcsBios::IntegerBuffer hydIndBrakeBuffer(FA_18C_hornet_HYD_IND_BRAKE, onHydIndBrakeChange);
+#pragma endregion Brake Pressure
+
+#pragma region Cabin Pressure
+void onCabinAltIndicatorChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer cabinAltIndicatorBuffer(FA_18C_hornet_PRESSURE_ALT, onCabinAltIndicatorChange);
+#pragma endregion Cabin Pressure
+
+#pragma region Hydraulics Pressure
+void onHydPressLChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer hydPressLBuffer(FA_18C_hornet_HYD_IND_LEFT, onHydPressLChange);
+void onHydPressRChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer hydPressRBuffer(FA_18C_hornet_HYD_IND_RIGHT, onHydPressRChange);
+#pragma endregion Hydraulics Pressure
+
+#pragma region Radar Altimeter
+void onRadaltMinHeightPtrChange(unsigned int newValue) {
+  // map(newValue, 1800, 65530, 0, 3200)
+}
+DcsBios::IntegerBuffer radaltMinHeightPtrBuffer(FA_18C_hornet_RADALT_MIN_HEIGHT_PTR, onRadaltMinHeightPtrChange);
+
+void onRadaltOffFlagChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer radaltOffFlagBuffer(FA_18C_hornet_RADALT_OFF_FLAG, onRadaltOffFlagChange);
+
+void onRadaltGreenLampChange(unsigned int newValue) {
+  if (newValue==1) {
+  } else {
+  }
+}
+DcsBios::IntegerBuffer radaltGreenLampBuffer(FA_18C_hornet_RADALT_GREEN_LAMP, onRadaltGreenLampChange);
+
+void onLowAltWarnLtChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer lowAltWarnLtBuffer(FA_18C_hornet_LOW_ALT_WARN_LT, onLowAltWarnLtChange);
+
+void onRadaltAltPtrChange(unsigned int newValue) {
+}
+DcsBios::IntegerBuffer radaltAltPtrBuffer(FA_18C_hornet_RADALT_ALT_PTR, onRadaltAltPtrChange);
+#pragma endregion Radar Altimeter
+
+#pragma region IFEI
 //################## RPM  ##################
 void onIfeiRpmLChange(char* newValue) {
   ifei.rpmL = parseU8(newValue);
@@ -349,3 +448,4 @@ void onIfeiDispIntLtChange(unsigned int newValue) {
   ifei.dispIntLt = newValue;
 }
 DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT_A, 0xffff, 0, onIfeiDispIntLtChange);
+#pragma endregion IFEI
