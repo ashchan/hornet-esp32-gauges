@@ -1,6 +1,9 @@
 #include <Arduino.h>
+#include <WiFi.h>
+#include <esp_now.h>
 #include <lvgl.h>
 #include "Display_ST77916.h"
+#include "message.h"
 
 // LVGL bitmaps
 #include "radarAltBackground.c"
@@ -37,7 +40,76 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
+static RadarAltimeterMessage lastMessage = {};
+volatile bool hasNewMessage = false;
+
+void updateRendering() {
+  lv_img_set_angle(img_radarAltNeedle, map(lastMessage.altPtr, 3450, 65530, 0, 3200));
+  lv_img_set_angle(img_radarAltMinHeight, map(lastMessage.minHeightPtr, 1800, 65530, 0, 3200));
+
+  if (lastMessage.greenLamp == 1) {
+    lv_img_set_src(img_GreenLed, &GreenLedOn);
+  } else {
+    lv_img_set_src(img_GreenLed, &GreenLedOff);
+  }
+
+  if (lastMessage.warnLt == 1) {
+    lv_img_set_src(img_RedLed, &RedLedOn);
+  } else {
+    lv_img_set_src(img_RedLed, &RedLedOff);
+  }
+
+  const int16_t H = (int16_t)radarAltOff.header.h;
+  const int16_t OFF_EXTRA = 5;
+
+  // Translate Y goes from -(H+5) (off) to 0 (fully visible)
+  int32_t ty = - (int32_t)H - OFF_EXTRA + ((int32_t)(H + OFF_EXTRA) * (int32_t)lastMessage.offFlag) / 65535;
+
+  // Clamp (just in case)
+  if (ty > 0) {
+    ty = 0;
+  }
+  if (ty < -((int32_t)H + OFF_EXTRA)) {
+    ty = -((int32_t)H + OFF_EXTRA);
+  }
+
+  lv_obj_set_style_translate_y(img_radarAltOff, (int16_t)ty, 0);
+}
+
+static void initEspNowClient() {
+  WiFi.mode(WIFI_STA);
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW init failed");
+    return;
+  }
+
+  esp_now_register_recv_cb([](const esp_now_recv_info_t* info, const uint8_t* data, int len) {
+    if (len < (int)sizeof(MessageHeader)) {
+      return;
+    }
+
+    const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
+    switch (hdr->category) {
+    case MessageCategory::RadarAltimeter:
+      if (len != (int)sizeof(RadarAltimeterMessage)) {
+        return;
+      }
+      lastMessage = *reinterpret_cast<const RadarAltimeterMessage *>(data);
+      hasNewMessage = true;
+      break;
+    default:
+      break;
+    }
+  });
+}
+
 void setup() {
+  Serial.begin(115200);
+
+  Wire1.begin(11, 10);   // SDA=11, SCL=10 (EXT I2C on this Waveshare 1.85 family)
+  Wire1.setClock(400000);
+
   ST77916_Init();
   Backlight_Init();
   Set_Backlight(25);
@@ -110,10 +182,19 @@ void setup() {
 
   // Start needle at 0°
   lv_img_set_angle(img_radarAltNeedle, 0);
+
+  initEspNowClient();
 }
 
 void loop() {
+  lv_tick_inc(5);
   lv_timer_handler();     // Refresh LVGL
 
-  delay(5);  // short delay to keep things smooth
+  const uint32_t now = millis();
+  static volatile uint32_t lastUpdatedAt = 0;
+  if (now - lastUpdatedAt > 40 && hasNewMessage) {
+    hasNewMessage = false;
+    lastUpdatedAt = now;
+    updateRendering();
+  }
 }
