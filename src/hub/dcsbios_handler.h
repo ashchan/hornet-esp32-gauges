@@ -6,75 +6,20 @@
 #include <DcsBios.h>
 #include "message.h"
 
+static AltimeterMessage altimeter{};
+static RadarAltimeterMessage radarAltimeter{};
 static IfeiMessage ifei{};
+static uint16_t airspeed;
+static uint16_t vsi;
+static uint16_t voltU;
+static uint16_t voltE;
+static uint16_t hydIndBrake;
+static uint16_t cabinAltIndicator;
+static uint16_t hydPressL;
+static uint16_t hydPressR;
 
-uint16_t parseU16(const char *s) {
-  if (!s) {
-    return 0;
-  }
-
-  // skip leading spaces
-  while (*s == ' ' || *s == '\t') {
-    ++s;
-  }
-
-  if (*s == '\0') {
-    return 0;
-  }
-
-  uint32_t v = 0;
-  bool any = false;
-
-  while (*s >= '0' && *s <= '9') {
-    any = true;
-    v = v * 10u + (uint32_t)(*s - '0');
-    if (v > 65535u) {
-      v = 65535u; // clamp to uint16_t max
-      break;
-    }
-    ++s;
-  }
-
-  if (!any) {
-    return 0; // no digits found
-  }
-
-  return (uint16_t)v;
-}
-
-uint8_t parseU8(const char *s) {
-  if (!s) {
-    return 0;
-  }
-
-  // skip leading spaces
-  while (*s == ' ' || *s == '\t') {
-    ++s;
-  }
-
-  if (*s == '\0') {
-    return 0;
-  }
-
-  uint16_t v = 0;
-  bool any = false;
-
-  while (*s >= '0' && *s <= '9') {
-    any = true;
-    v = (uint16_t)(v * 10u + (uint16_t)(*s - '0'));
-    if (v > 255u) {
-      v = 255u; // clamp to uint8_t max
-      break;
-    }
-    ++s;
-  }
-
-  if (!any) {
-    return 0; // no digits found
-  }
-
-  return (uint8_t)v;
-}
+uint16_t parseU16(const char *s);
+uint8_t parseU8(const char *s);
 
 #pragma region DCS Common Data
 void onAcftNameBufferChange(char* newValue) {
@@ -93,93 +38,108 @@ DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MO
 
 #pragma region Airspeed
 void onStbyAsiAirspeedChange(unsigned int newValue) {
+  airspeed = newValue;
 }
 DcsBios::IntegerBuffer stbyAsiAirspeedBuffer(FA_18C_hornet_STBY_ASI_AIRSPEED, onStbyAsiAirspeedChange);
 #pragma endregion Airspeed
 
 #pragma region Altimeter
 void onStbyAlt100FtPtrChange(unsigned int newValue) {
+  altimeter.alt100FtPtr = newValue;
 }
 DcsBios::IntegerBuffer stbyAlt100FtPtrBuffer(FA_18C_hornet_STBY_ALT_100_FT_PTR, onStbyAlt100FtPtrChange);
 
 void onStbyAlt1000FtCntChange(unsigned int newValue) {
+  altimeter.alt1000FtCnt = newValue;
 }
 DcsBios::IntegerBuffer stbyAlt1000FtCntBuffer(FA_18C_hornet_STBY_ALT_1000_FT_CNT, onStbyAlt1000FtCntChange);
 
 void onStbyAlt10000FtCntChange(unsigned int newValue) {
+  altimeter.alt10000FtCnt = newValue;
 }
 DcsBios::IntegerBuffer stbyAlt10000FtCntBuffer(FA_18C_hornet_STBY_ALT_10000_FT_CNT, onStbyAlt10000FtCntChange);
 void onStbyPressSet0Change(unsigned int newValue) {
+  altimeter.pressSet0 = newValue;
 }
 DcsBios::IntegerBuffer stbyPressSet0Buffer(FA_18C_hornet_STBY_PRESS_SET_0, onStbyPressSet0Change);
 
 void onStbyPressSet1Change(unsigned int newValue) {
+  altimeter.pressSet1 = newValue;
 }
 DcsBios::IntegerBuffer stbyPressSet1Buffer(FA_18C_hornet_STBY_PRESS_SET_1, onStbyPressSet1Change);
 void onStbyPressSet2Change(unsigned int newValue) {
+  altimeter.pressSet2 = newValue;
 }
 DcsBios::IntegerBuffer stbyPressSet2Buffer(FA_18C_hornet_STBY_PRESS_SET_2, onStbyPressSet2Change);
 #pragma endregion Altimeter
 
 #pragma region Vertical Velocity Indicator
 void onVsiChange(unsigned int newValue) {
+  vsi = newValue;
 }
 DcsBios::IntegerBuffer vsiBuffer(FA_18C_hornet_VSI, onVsiChange);
-#pragma endregion Vertical Velocity Indicator 
+#pragma endregion Vertical Velocity Indicator
 
 #pragma region Battery Voltage
 void onVoltUChange(unsigned int v) {
+  voltU = v;
 }
 DcsBios::IntegerBuffer voltUBuffer(FA_18C_hornet_VOLT_U, onVoltUChange);
 
 void onVoltEChange(unsigned int v) {
+  voltE = v;
 }
 DcsBios::IntegerBuffer voltEBuffer(FA_18C_hornet_VOLT_E, onVoltEChange);
 #pragma endregion Battery Voltage
 
 #pragma region Brake Pressure
 void onHydIndBrakeChange(unsigned int v) {
+  hydIndBrake = v;
 }
 DcsBios::IntegerBuffer hydIndBrakeBuffer(FA_18C_hornet_HYD_IND_BRAKE, onHydIndBrakeChange);
 #pragma endregion Brake Pressure
 
 #pragma region Cabin Pressure
 void onCabinAltIndicatorChange(unsigned int newValue) {
+  cabinAltIndicator = newValue;
 }
 DcsBios::IntegerBuffer cabinAltIndicatorBuffer(FA_18C_hornet_PRESSURE_ALT, onCabinAltIndicatorChange);
 #pragma endregion Cabin Pressure
 
 #pragma region Hydraulics Pressure
 void onHydPressLChange(unsigned int newValue) {
+  hydPressL = newValue;
 }
 DcsBios::IntegerBuffer hydPressLBuffer(FA_18C_hornet_HYD_IND_LEFT, onHydPressLChange);
 void onHydPressRChange(unsigned int newValue) {
+  hydPressR = newValue;
 }
 DcsBios::IntegerBuffer hydPressRBuffer(FA_18C_hornet_HYD_IND_RIGHT, onHydPressRChange);
 #pragma endregion Hydraulics Pressure
 
 #pragma region Radar Altimeter
 void onRadaltMinHeightPtrChange(unsigned int newValue) {
-  // map(newValue, 1800, 65530, 0, 3200)
+  radarAltimeter.minHeightPtr = newValue;
 }
 DcsBios::IntegerBuffer radaltMinHeightPtrBuffer(FA_18C_hornet_RADALT_MIN_HEIGHT_PTR, onRadaltMinHeightPtrChange);
 
 void onRadaltOffFlagChange(unsigned int newValue) {
+  radarAltimeter.offFlag = newValue;
 }
 DcsBios::IntegerBuffer radaltOffFlagBuffer(FA_18C_hornet_RADALT_OFF_FLAG, onRadaltOffFlagChange);
 
 void onRadaltGreenLampChange(unsigned int newValue) {
-  if (newValue==1) {
-  } else {
-  }
+  radarAltimeter.greenLamp = newValue;
 }
 DcsBios::IntegerBuffer radaltGreenLampBuffer(FA_18C_hornet_RADALT_GREEN_LAMP, onRadaltGreenLampChange);
 
 void onLowAltWarnLtChange(unsigned int newValue) {
+  radarAltimeter.warnLt = newValue;
 }
 DcsBios::IntegerBuffer lowAltWarnLtBuffer(FA_18C_hornet_LOW_ALT_WARN_LT, onLowAltWarnLtChange);
 
 void onRadaltAltPtrChange(unsigned int newValue) {
+  radarAltimeter.altPtr = newValue;
 }
 DcsBios::IntegerBuffer radaltAltPtrBuffer(FA_18C_hornet_RADALT_ALT_PTR, onRadaltAltPtrChange);
 #pragma endregion Radar Altimeter
@@ -449,3 +409,73 @@ void onIfeiDispIntLtChange(unsigned int newValue) {
 }
 DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT_A, 0xffff, 0, onIfeiDispIntLtChange);
 #pragma endregion IFEI
+
+#pragma region Helpers
+uint16_t parseU16(const char *s) {
+  if (!s) {
+    return 0;
+  }
+
+  // skip leading spaces
+  while (*s == ' ' || *s == '\t') {
+    ++s;
+  }
+
+  if (*s == '\0') {
+    return 0;
+  }
+
+  uint32_t v = 0;
+  bool any = false;
+
+  while (*s >= '0' && *s <= '9') {
+    any = true;
+    v = v * 10u + (uint32_t)(*s - '0');
+    if (v > 65535u) {
+      v = 65535u; // clamp to uint16_t max
+      break;
+    }
+    ++s;
+  }
+
+  if (!any) {
+    return 0; // no digits found
+  }
+
+  return (uint16_t)v;
+}
+
+uint8_t parseU8(const char *s) {
+  if (!s) {
+    return 0;
+  }
+
+  // skip leading spaces
+  while (*s == ' ' || *s == '\t') {
+    ++s;
+  }
+
+  if (*s == '\0') {
+    return 0;
+  }
+
+  uint16_t v = 0;
+  bool any = false;
+
+  while (*s >= '0' && *s <= '9') {
+    any = true;
+    v = (uint16_t)(v * 10u + (uint16_t)(*s - '0'));
+    if (v > 255u) {
+      v = 255u; // clamp to uint8_t max
+      break;
+    }
+    ++s;
+  }
+
+  if (!any) {
+    return 0; // no digits found
+  }
+
+  return (uint8_t)v;
+}
+#pragma endregion Helpers

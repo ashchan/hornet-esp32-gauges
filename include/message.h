@@ -29,6 +29,27 @@ struct __attribute__((packed)) Message {
   char data[MessageDataLimit];
 };
 
+struct __attribute__((packed)) AltimeterMessage {
+  MessageHeader header;
+
+  uint16_t alt100FtPtr;
+  uint16_t alt1000FtCnt;
+  uint16_t alt10000FtCnt;
+  uint16_t pressSet0;
+  uint16_t pressSet1;
+  uint16_t pressSet2;
+};
+
+struct __attribute__((packed)) RadarAltimeterMessage {
+  MessageHeader header;
+
+  uint16_t altPtr;
+  uint16_t minHeightPtr;
+  uint16_t offFlag;
+  uint16_t greenLamp;
+  uint16_t warnLt;
+};
+
 struct __attribute__((packed)) IfeiMessage {
   MessageHeader header;
 
