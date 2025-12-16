@@ -64,17 +64,26 @@ static uint16_t previousHydPressR;
 void loop() {
   DcsBios::loop();
 
-  static uint32_t messageInterval = 200; // 1000 / messageInterval Hz max
+  static uint32_t messageInterval = 40; // 1000 / messageInterval Hz max
+  static uint32_t ifeiMessageInterval = 250;
   static uint32_t lastSendAt = 0;
+  static uint32_t lastIfeiSendAt = 0;
   const uint32_t now = millis();
-  if (now - lastSendAt < messageInterval) {
+
+  if (now - lastIfeiSendAt < ifeiMessageInterval) {
     return;
   }
 
-  if (!isEqualIfeiMessage(ifei, previousIfei)) {
+  // Limit IFEI refresh rate due to its data size and update frequency
+  if (now - lastSendAt > messageInterval * 5 && !isEqualIfeiMessage(ifei, previousIfei)) {
     previousIfei = ifei;
     previousIfei.header.ms = millis();
     sendMessage(previousIfei);
+  }
+  lastIfeiSendAt = now;
+
+  if (now - lastSendAt < messageInterval) {
+    return;
   }
 
   if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {

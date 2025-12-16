@@ -1,6 +1,6 @@
 #pragma once
 
-#define Serial Serial0 // SwitchScience ESPr Developer S3 TypeC (8331)
+//#define Serial Serial0 // Redefine this if usb_cdc_on_boot is false, with SwitchScience ESPr Developer S3 TypeC (8331)
 #define DCSBIOS_DEFAULT_SERIAL
 #define DCSBIOS_DISABLE_SERVO
 #include <DcsBios.h>
