@@ -130,14 +130,19 @@ void setup() {
 }
 
 void loop() {
-  lv_tick_inc(5);
-  lv_timer_handler();
-
+  static uint32_t lastTick = millis();
   const uint32_t now = millis();
-  static volatile uint32_t lastUpdatedAt = 0;
+  uint32_t dt = now - lastTick;
+  lastTick = now;
+
+  lv_tick_inc(dt);
+
+  static uint32_t lastUpdatedAt = 0;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;
     lastUpdatedAt = now;
     updateRendering();
   }
+
+  lv_timer_handler();     // Refresh LVGL
 }
