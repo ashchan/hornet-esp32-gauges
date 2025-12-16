@@ -58,6 +58,7 @@ void onStbyAlt10000FtCntChange(unsigned int newValue) {
   altimeter.alt10000FtCnt = newValue;
 }
 DcsBios::IntegerBuffer stbyAlt10000FtCntBuffer(FA_18C_hornet_STBY_ALT_10000_FT_CNT, onStbyAlt10000FtCntChange);
+
 void onStbyPressSet0Change(unsigned int newValue) {
   altimeter.pressSet0 = newValue;
 }
@@ -67,6 +68,7 @@ void onStbyPressSet1Change(unsigned int newValue) {
   altimeter.pressSet1 = newValue;
 }
 DcsBios::IntegerBuffer stbyPressSet1Buffer(FA_18C_hornet_STBY_PRESS_SET_1, onStbyPressSet1Change);
+
 void onStbyPressSet2Change(unsigned int newValue) {
   altimeter.pressSet2 = newValue;
 }
@@ -111,6 +113,7 @@ void onHydPressLChange(unsigned int newValue) {
   hydPressL = newValue;
 }
 DcsBios::IntegerBuffer hydPressLBuffer(FA_18C_hornet_HYD_IND_LEFT, onHydPressLChange);
+
 void onHydPressRChange(unsigned int newValue) {
   hydPressR = newValue;
 }
