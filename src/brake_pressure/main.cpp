@@ -22,7 +22,7 @@ static const uint16_t CANVAS_W = 240, CANVAS_H = 240;
 
 // ── TFT & Sprites ──────────────────────────────────────────────────────────────
 TFT_eSPI tft = TFT_eSPI();
-TFT_eSprite sprBack(&tft);   
+TFT_eSprite sprBack(&tft);
 TFT_eSprite sprNeedle(&tft);
 
 static volatile bool dirtyBrake = true;
@@ -116,7 +116,6 @@ void loop() {
   }
 
   yield();
-  
 }
 
 // ── Rendering ──────────────────────────────────────────────────────────────────

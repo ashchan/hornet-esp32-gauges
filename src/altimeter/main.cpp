@@ -126,7 +126,7 @@ void onStbyPressSet0Change(unsigned int newValue) {
   static unsigned long lastDebug = 0;
   static float lastNorm = 0.0f;
   static float offset = 252.0f;
-  
+
   static bool initialized = false;
 
   float norm = newValue / 65535.0f;  // 0.0–1.0
@@ -162,10 +162,10 @@ void onStbyPressSet0Change(unsigned int newValue) {
   lv_img_set_offset_y(img_baroOnes, (int)-offset);
 }
 
-void onStbyPressSet1Change(unsigned int newValue) {   
+void onStbyPressSet1Change(unsigned int newValue) {
   static float lastNorm = 0.0f;
   static float offset = 252.0f;
-  
+
   static bool initialized = false;
 
   float norm = newValue / 65535.0f;  // 0.0–1.0
@@ -195,7 +195,7 @@ void onStbyPressSet1Change(unsigned int newValue) {
     offset -= 280.0f;
   }
 
-  lv_img_set_offset_y(img_baroTens, -(int)offset); 
+  lv_img_set_offset_y(img_baroTens, -(int)offset);
 }
 
 void onStbyPressSet2Change(unsigned int newValue) {

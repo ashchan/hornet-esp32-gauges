@@ -131,7 +131,7 @@ void loop() {
     renderGauge(map_u(u), map_e(e));
     lastFrameMs = now;
   }
-  
+
   yield();
  }
 
