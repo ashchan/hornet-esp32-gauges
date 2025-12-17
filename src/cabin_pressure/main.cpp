@@ -31,7 +31,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 bool hasNewMessage = false;
 IntegerMessage lastMessage = {};
 void updateRendering() {
-  lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65535, -1800, 1100));
+  lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65535, -1800, 1160));
 }
 
 static void initEspNowClient() {
