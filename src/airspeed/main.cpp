@@ -1,6 +1,6 @@
 // Designed for Waveshare 1.85" round lcd without touch screen
 // https://www.waveshare.com/wiki/ESP32-S3-LCD-1.85
-// 
+//
 // LVGL version is 8.3.11
 // Display_ST77916, esp_lcd_st77916, I2C_Driver files sourced from WaveShare's demo code for the display
 
@@ -25,8 +25,8 @@ static lv_color_t buf2[DISP_WIDTH * 40];
 
 
 // ===== Globals =====
-lv_obj_t *img_airSpeedIndicatorBG;
-lv_obj_t *img_airspeedNeedle;
+lv_obj_t *imgBackground;
+lv_obj_t *imgNeedle;
 
 
 // Center and radius
@@ -34,14 +34,14 @@ const int16_t center_x = DISP_WIDTH / 2;
 const int16_t center_y = DISP_HEIGHT / 2;
 
 void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color_p) {
-    LCD_addWindow(area->x1, area->y1, area->x2, area->y2, (uint16_t*)color_p);
-    lv_disp_flush_ready(disp);
+  LCD_addWindow(area->x1, area->y1, area->x2, area->y2, (uint16_t*)color_p);
+  lv_disp_flush_ready(disp);
 }
 
 bool hasNewMessage = false;
 IntegerMessage lastMessage = {};
 void updateRendering() {
-  lv_img_set_angle(img_airspeedNeedle, map(lastMessage.value, 0, 65530, 0, 3500));
+  lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65530, 0, 3500));
 }
 
 static void initEspNowClient() {
@@ -108,23 +108,23 @@ void setup() {
 
 
   // ===== Altimeter background =====
-  img_airSpeedIndicatorBG = lv_img_create(lv_scr_act());
-  lv_img_set_src(img_airSpeedIndicatorBG, &airSpeedIndicatorBG);
-  lv_obj_align(img_airSpeedIndicatorBG, LV_ALIGN_CENTER, 0, 0);
+  imgBackground = lv_img_create(lv_scr_act());
+  lv_img_set_src(imgBackground, &airSpeedIndicatorBG);
+  lv_obj_align(imgBackground, LV_ALIGN_CENTER, 0, 0);
 
   // ===== Needle =====
-  img_airspeedNeedle = lv_img_create(lv_scr_act());
-  lv_img_set_src(img_airspeedNeedle, &airspeedNeedle);
+  imgNeedle = lv_img_create(lv_scr_act());
+  lv_img_set_src(imgNeedle, &airspeedNeedle);
 
   // Set the pivot to the bottom center of the image
   lv_point_t pivot = {
-      airspeedNeedle.header.w / 2,   // horizontally centered
-      airspeedNeedle.header.h / 2       // very bottom
+    airspeedNeedle.header.w / 2,   // horizontally centered
+    airspeedNeedle.header.h / 2       // very bottom
   };
-  lv_img_set_pivot(img_airspeedNeedle, pivot.x, pivot.y);
+  lv_img_set_pivot(imgNeedle, pivot.x, pivot.y);
 
   // Align so the pivot (bottom center) is at the gauge center
-  lv_obj_align(img_airspeedNeedle, LV_ALIGN_CENTER, 0, 0);
+  lv_obj_align(imgNeedle, LV_ALIGN_CENTER, 0, 0);
 
   initEspNowClient();
 }

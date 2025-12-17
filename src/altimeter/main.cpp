@@ -77,8 +77,8 @@ void updateBaroDrum(lv_obj_t *img, unsigned int newValue) {
 
 // Needle (0–65535 => 0–360°)
 void onStbyAlt100FtPtrChange(unsigned int newValue) {
-    float angle = (newValue / 65535.0f) * 360.0f;
-    lv_img_set_angle(img_altimeterNeedle, angle * 10); // LVGL uses 0.1° units
+  float angle = (newValue / 65535.0f) * 360.0f;
+  lv_img_set_angle(img_altimeterNeedle, angle * 10); // LVGL uses 0.1° units
 }
 
 void onStbyAlt1000FtCntChange(unsigned int newValue) {
