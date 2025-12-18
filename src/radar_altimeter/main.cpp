@@ -169,7 +169,7 @@ void setup() {
   lv_obj_set_pos(img_radarAltMinHeight, x, y);
 
   // Set pivot to bottom center
-  lv_point_t pivot = { radarAltMinHeight.header.w / 2, radarAltMinHeight.header.h };
+  lv_point_t pivot = { (lv_coord_t)(radarAltMinHeight.header.w / 2), (lv_coord_t)(radarAltMinHeight.header.h) };
   lv_img_set_pivot(img_radarAltMinHeight, pivot.x, pivot.y);
 
   // ===== Radar Altimeter Needle =====

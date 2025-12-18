@@ -312,7 +312,7 @@ void setup() {
   lv_img_set_src(img_altimeterNeedle, &altimeterNeedle);
 
   // Pivot at center of needle image
-  lv_point_t pivot = { altimeterNeedle.header.w / 2, altimeterNeedle.header.h / 2 };
+  lv_point_t pivot = { (lv_coord_t)(altimeterNeedle.header.w / 2), (lv_coord_t)(altimeterNeedle.header.h / 2) };
   lv_img_set_pivot(img_altimeterNeedle, pivot.x, pivot.y);
 
   // Place pivot exactly at gauge center

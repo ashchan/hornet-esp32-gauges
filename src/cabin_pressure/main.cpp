@@ -107,8 +107,8 @@ void setup() {
 
   // Set the pivot to the bottom center of the image
   lv_point_t pivot = {
-    cabinPressureNeedle.header.w / 2,   // horizontally centered
-    cabinPressureNeedle.header.h / 2       // very bottom
+    (lv_coord_t)(cabinPressureNeedle.header.w / 2),   // horizontally centered
+    (lv_coord_t)(cabinPressureNeedle.header.h / 2)    // very bottom
   };
   lv_img_set_pivot(imgNeedle, pivot.x, pivot.y);
 

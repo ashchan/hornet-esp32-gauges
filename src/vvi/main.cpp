@@ -119,15 +119,15 @@ void setup() {
   lv_img_set_src(img_verticleVelocityIndicator, &verticleVelocityIndicator);
   lv_obj_align(img_verticleVelocityIndicator, LV_ALIGN_CENTER, 0, 0);
 
-  // ======  V V I Needle ====== 
+  // ======  V V I Needle ======
   img_Needle = lv_img_create(lv_scr_act());
   lv_img_set_src(img_Needle, &Needle);
   lv_obj_align(img_Needle, LV_ALIGN_CENTER, 0, 0);
 
   // Set the pivot to the bottom center of the image
   lv_point_t pivot = {
-    Needle.header.w / 2,   // horizontally centered
-    Needle.header.h / 2       // very bottom
+    (lv_coord_t)(Needle.header.w / 2),   // horizontally centered
+    (lv_coord_t)(Needle.header.h / 2)    // very bottom
   };
   lv_img_set_pivot(img_Needle, pivot.x, pivot.y);
 
