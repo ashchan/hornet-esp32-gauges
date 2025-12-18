@@ -153,11 +153,11 @@ void setup() {
   // ===== LEDs =====
   img_RedLed = lv_img_create(lv_scr_act());
   lv_img_set_src(img_RedLed, &RedLedOff);
-  lv_obj_align(img_RedLed, LV_ALIGN_CENTER, -65, 0);
+  lv_obj_align(img_RedLed, LV_ALIGN_CENTER, -72, 0);
 
   img_GreenLed = lv_img_create(lv_scr_act());
   lv_img_set_src(img_GreenLed, &GreenLedOff);
-  lv_obj_align(img_GreenLed, LV_ALIGN_CENTER, 65, 0);
+  lv_obj_align(img_GreenLed, LV_ALIGN_CENTER, 72, 0);
 
   // ===== Altitude Min Height Indicator =====
   img_radarAltMinHeight = lv_img_create(lv_scr_act());
