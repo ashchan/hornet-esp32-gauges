@@ -80,38 +80,20 @@ void onStbyAlt10000FtCntChange(unsigned int newValue) {
   lv_img_set_offset_y(img_altimeterMarquee2, offset10000s);
 }
 
-// value: 0 - 9
+// value: 0.0 - 10.0
 void updateBaroDrum(lv_obj_t *img, float value) {
-  float offset = (value - 9) / 10 * BARO_TOTAL_H;
+  // Round to .5
+  float partial = std::round(value * 2) / 2;
+  float offset = (partial - 9) / 10 * BARO_TOTAL_H;
   lv_img_set_offset_y(img, (int)offset);
 }
 
 void onStbyPressSet0Change(unsigned int newValue) {
-  float number = 9;
-  if (newValue < 6553) number = 0;
-  else if (newValue < 13106) number = 1;
-  else if (newValue < 16301) number = 2;
-  else if (newValue < 19660) number = 3;
-  else if (newValue < 29918) number = 4;
-  else if (newValue < 36727) number = 5;
-  else if (newValue < 43536) number = 6;
-  else if (newValue < 50345) number = 7;
-  else if (newValue < 53284) number = 8;
-  updateBaroDrum(img_baroOnes, number);
+  updateBaroDrum(img_baroOnes, newValue * 10 / 65535.0f);
 }
 
 void onStbyPressSet1Change(unsigned int newValue) {
-  float number = 9;
-  if (newValue < 6553) number = 0;
-  else if (newValue < 13106) number = 1;
-  else if (newValue < 16301) number = 2;
-  else if (newValue < 19660) number = 3;
-  else if (newValue < 29918) number = 4;
-  else if (newValue < 36727) number = 5;
-  else if (newValue < 43536) number = 6;
-  else if (newValue < 50345) number = 7;
-  else if (newValue < 53284) number = 8;
-  updateBaroDrum(img_baroTens, number);
+  updateBaroDrum(img_baroTens, newValue * 10 / 65535.0f);
 }
 
 void onStbyPressSet2Change(unsigned int newValue) {
@@ -292,8 +274,10 @@ void setup() {
   lv_img_set_offset_y(img_altimeterMarquee, DIGIT_HEIGHT);
   lv_img_set_offset_y(img_altimeterMarquee2, DIGIT_HEIGHT2);
 
-  lv_img_set_offset_y(img_baroOnes, BARO_DIGIT_H);
-  lv_img_set_offset_y(img_baroTens, BARO_DIGIT_H);
+  updateBaroDrum(img_baroThousands, 2);
+  updateBaroDrum(img_baroHundreds, 9);
+  updateBaroDrum(img_baroTens, 9);
+  updateBaroDrum(img_baroOnes, 2);
 
   initEspNowClient();
 }
