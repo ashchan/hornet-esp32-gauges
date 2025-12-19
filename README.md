@@ -23,6 +23,7 @@ The original gauge rendering implementations were created by:
 
 The following projects and resources were used as references or starting points:
 
+* [OpenHornet Software](https://github.com/jrsteensen/OpenHornet-Software)
 * IFEI
   - [SCUBA82/OH-IFEI](https://github.com/SCUBA82/OH-IFEI)
   - [ashchan/OH-IFEI-DIS08070H](https://github.com/ashchan/OH-IFEI-DIS08070H) (_My fork for the Elecrow 7" HMI display_)
