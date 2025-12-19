@@ -59,18 +59,7 @@ void onStbyAlt100FtPtrChange(unsigned int newValue) {
 }
 
 void onStbyAlt1000FtCntChange(unsigned int newValue) {
-  float value = 9;
-  if (newValue < 6553) value = 0;
-  else if (newValue < 13106) value = 1;
-  else if (newValue < 19660) value = 2;
-  else if (newValue < 26214) value = 3;
-  else if (newValue < 32767) value = 4;
-  else if (newValue < 39321) value = 5;
-  else if (newValue < 45874) value = 6;
-  else if (newValue < 52428) value = 7;
-  else if (newValue < 58981) value = 8;
-
-  float offset = (value - 9) / 10 * 410;
+  float offset = (newValue / 65535.0 * 10 - 9) / 10 * 410;
   lv_img_set_offset_y(img_altimeterMarquee, (int)offset);
 }
 
