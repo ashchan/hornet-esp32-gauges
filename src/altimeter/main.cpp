@@ -208,17 +208,6 @@ void setup() {
   lv_img_set_src(img_altimeterMarquee2, &altimeterMarquee2);
   lv_obj_set_pos(img_altimeterMarquee2, 0, 0);
 
-  // ===== Needle =====
-  img_altimeterNeedle = lv_img_create(lv_scr_act());
-  lv_img_set_src(img_altimeterNeedle, &altimeterNeedle);
-
-  // Pivot at center of needle image
-  lv_point_t pivot = { (lv_coord_t)(altimeterNeedle.header.w / 2), (lv_coord_t)(altimeterNeedle.header.h / 2) };
-  lv_img_set_pivot(img_altimeterNeedle, pivot.x, pivot.y);
-
-  // Place pivot exactly at gauge center
-  lv_obj_set_pos(img_altimeterNeedle, center_x - pivot.x, center_y - pivot.y);
-
   // overall window width = 4 digits + small gaps
   int windowW = (BARO_DIGIT_W * 4) + 6; // ~78 px wide
   int windowH = BARO_DIGIT_H;           // 28 px tall
@@ -262,6 +251,17 @@ void setup() {
 
   lv_img_set_offset_y(img_altimeterMarquee, DIGIT_HEIGHT);
   lv_img_set_offset_y(img_altimeterMarquee2, DIGIT_HEIGHT2);
+
+  // ===== Needle =====
+  img_altimeterNeedle = lv_img_create(lv_scr_act());
+  lv_img_set_src(img_altimeterNeedle, &altimeterNeedle);
+
+  // Pivot at center of needle image
+  lv_point_t pivot = { (lv_coord_t)(altimeterNeedle.header.w / 2), (lv_coord_t)(altimeterNeedle.header.h / 2) };
+  lv_img_set_pivot(img_altimeterNeedle, pivot.x, pivot.y);
+
+  // Place pivot exactly at gauge center
+  lv_obj_set_pos(img_altimeterNeedle, center_x - pivot.x, center_y - pivot.y);
 
   updateBaroDrum(img_baroThousands, 2);
   updateBaroDrum(img_baroHundreds, 9);
