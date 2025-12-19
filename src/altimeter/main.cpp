@@ -52,29 +52,6 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
-// TODO: track https://github.com/shef-code/F18-Altimeter update to match DCS actual displays
-
-void updateBaroMain(lv_obj_t* imgThousands, lv_obj_t* imgHundreds, float value) {
-  // Clamp to 28.0–31.0 just for safety
-  value = min(31.0f, max(28.0f, value));
-
-  // Normalize 28–31 → 0–1
-  float norm = (value - 28.0f) / 3.0f;
-
-  // 0 at bottom, 9 at top (reversed)
-  int offset = (int)((1.0f - norm) * (BARO_TOTAL_H - BARO_DIGIT_H));
-
-  // Apply same offset to both digits
-  lv_img_set_offset_y(imgThousands, -offset);
-  lv_img_set_offset_y(imgHundreds,  -offset);
-}
-
-void updateBaroDrum(lv_obj_t *img, unsigned int newValue) {
-  float norm = newValue / 65535.0f;
-  int offset = (int)((1.0f - norm) * (BARO_TOTAL_H - BARO_DIGIT_H));
-  lv_img_set_offset_y(img, -offset);
-}
-
 // Needle (0–65535 => 0–360°)
 void onStbyAlt100FtPtrChange(unsigned int newValue) {
   float angle = (newValue / 65535.0f) * 360.0f;
@@ -82,38 +59,19 @@ void onStbyAlt100FtPtrChange(unsigned int newValue) {
 }
 
 void onStbyAlt1000FtCntChange(unsigned int newValue) {
-  static float lastNorm = 0.0f;
-  static float offset = 369.0f;
+  float value = 9;
+  if (newValue < 6553) value = 0;
+  else if (newValue < 13106) value = 1;
+  else if (newValue < 19660) value = 2;
+  else if (newValue < 26214) value = 3;
+  else if (newValue < 32767) value = 4;
+  else if (newValue < 39321) value = 5;
+  else if (newValue < 45874) value = 6;
+  else if (newValue < 52428) value = 7;
+  else if (newValue < 58981) value = 8;
 
-  static bool initialized = false;
-
-  float norm = newValue / 65535.0f;  // 0.0–1.0
-
-  if (!initialized) {
-    lastNorm = norm;
-    initialized = true;
-  }
-
-  // Detect wrap (so 9↔0 rolls smoothly)
-  float diff = norm - lastNorm;
-  if (diff > 0.5f) {
-    diff -= 1.0f;
-  } else if (diff < -0.5f) {
-    diff += 1.0f;
-  }
-  lastNorm = norm;
-
-  // Move opposite to DCS value (because 9 is top, 0 is bottom)
-  offset -= diff * 410.0f;
-
-  // Wrap inside texture range
-  if (offset < 0) {
-    offset += 410.0f;
-  } else if (offset >= 410.0f) {
-    offset -= 410.0f;
-  }
-
-  lv_img_set_offset_y(img_altimeterMarquee, (int)-offset);
+  float offset = (value - 9) / 10 * 410;
+  lv_img_set_offset_y(img_altimeterMarquee, (int)offset);
 }
 
 // 10000s drum (0–5)
@@ -122,86 +80,58 @@ void onStbyAlt10000FtCntChange(unsigned int newValue) {
   lv_img_set_offset_y(img_altimeterMarquee2, offset10000s);
 }
 
+// value: 0 - 9
+void updateBaroDrum(lv_obj_t *img, float value) {
+  float offset = (value - 9) / 10 * BARO_TOTAL_H;
+  lv_img_set_offset_y(img, (int)offset);
+}
+
 void onStbyPressSet0Change(unsigned int newValue) {
-  static unsigned long lastDebug = 0;
-  static float lastNorm = 0.0f;
-  static float offset = 252.0f;
-
-  static bool initialized = false;
-
-  float norm = newValue / 65535.0f;  // 0.0–1.0
-
-  if (!initialized) {
-    lastNorm = norm;
-    // Calculate starting pixel offset from actual DCS value
-    offset = (1.0f - norm) * (280.0f - 28);
-    lv_img_set_offset_y(img_baroOnes, -offset);
-    initialized = true;
-    return;  // no animation this frame
-  }
-
-  // Detect wrap (so 9↔0 rolls smoothly)
-  float diff = norm - lastNorm;
-  if (diff > 0.5f) {
-    diff -= 1.0f;
-  } else if (diff < -0.5f) {
-    diff += 1.0f;
-  }
-  lastNorm = norm;
-
-  // Move opposite to DCS value (because 9 is top, 0 is bottom)
-  offset -= diff * 280.0f;
-
-  // Wrap inside texture range
-  if (offset < 0) {
-    offset += 280.0f;
-  } else if (offset >= 280.0f) {
-    offset -= 280.0f;
-  }
-
-  lv_img_set_offset_y(img_baroOnes, (int)-offset);
+  float number = 9;
+  if (newValue < 6553) number = 0;
+  else if (newValue < 13106) number = 1;
+  else if (newValue < 16301) number = 2;
+  else if (newValue < 19660) number = 3;
+  else if (newValue < 29918) number = 4;
+  else if (newValue < 36727) number = 5;
+  else if (newValue < 43536) number = 6;
+  else if (newValue < 50345) number = 7;
+  else if (newValue < 53284) number = 8;
+  updateBaroDrum(img_baroOnes, number);
 }
 
 void onStbyPressSet1Change(unsigned int newValue) {
-  static float lastNorm = 0.0f;
-  static float offset = 252.0f;
-
-  static bool initialized = false;
-
-  float norm = newValue / 65535.0f;  // 0.0–1.0
-
-  if (!initialized) {
-    lastNorm = norm;
-    // Calculate starting pixel offset from actual DCS value
-    offset = (1.0f - norm) * (280.0f - 28);
-    lv_img_set_offset_y(img_baroTens, -offset);
-    initialized = true;
-    return;  // no animation this frame
-  }
-
-  // Detect wrap (so 9↔0 rolls smoothly)
-  float diff = norm - lastNorm;
-  if (diff > 0.5f) diff -= 1.0f;
-  else if (diff < -0.5f) diff += 1.0f;
-  lastNorm = norm;
-
-  // Move opposite to DCS value (because 9 is top, 0 is bottom)
-  offset -= diff * 280.0f;
-
-  // Wrap inside texture range
-  if (offset < 0) {
-    offset += 280.0f;
-  } else if (offset >= 280.0f) {
-    offset -= 280.0f;
-  }
-
-  lv_img_set_offset_y(img_baroTens, -(int)offset);
+  float number = 9;
+  if (newValue < 6553) number = 0;
+  else if (newValue < 13106) number = 1;
+  else if (newValue < 16301) number = 2;
+  else if (newValue < 19660) number = 3;
+  else if (newValue < 29918) number = 4;
+  else if (newValue < 36727) number = 5;
+  else if (newValue < 43536) number = 6;
+  else if (newValue < 50345) number = 7;
+  else if (newValue < 53284) number = 8;
+  updateBaroDrum(img_baroTens, number);
 }
 
 void onStbyPressSet2Change(unsigned int newValue) {
-  // Convert raw 0–65535 to 28–31
-  float inHg = 28.0f + ((newValue / 65535.0f) * 3.0f);
-  updateBaroMain(img_baroThousands, img_baroHundreds, inHg);
+  float thousands = 2;
+  float hundreds = 9;
+  if (newValue < 39321) {
+    thousands = 2;
+    hundreds = 8;
+  } else if (newValue < 52428) {
+    thousands = 2;
+    hundreds = 9;
+  } else if (newValue < 65535) {
+    thousands = 3;
+    hundreds = 0;
+  } else {
+    thousands = 3;
+    hundreds = 1;
+  }
+  updateBaroDrum(img_baroThousands, thousands);
+  updateBaroDrum(img_baroHundreds, hundreds);
 }
 
 static AltimeterMessage lastMessage = {};
