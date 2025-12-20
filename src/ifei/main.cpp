@@ -21,26 +21,10 @@ static void initEspNowClient() {
     }
 
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
-    switch (hdr->category) {
-    case MessageCategory::IFEI:
-      if (len != (int)sizeof(IfeiMessage)) {
-        return;
-      }
+    if (hdr->category == MessageCategory::IFEI) {
       lastMessage = *reinterpret_cast<const IfeiMessage *>(data);
-      break;
-    case MessageCategory::Common:
-      if (len != (int)sizeof(Message)) {
-        return;
-      }
-      // auto *msg = reinterpret_cast<const Message *>(data);
-      // TODO
-      break;
-    default:
-      // ignore
-      return;
+      lastMessageMs = millis();
     }
-
-    lastMessageMs = millis();
   });
 }
 
