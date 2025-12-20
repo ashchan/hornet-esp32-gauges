@@ -71,7 +71,7 @@ void loop() {
   const uint32_t now = millis();
 
   // Limit IFEI refresh rate due to its data size and update frequency
-  if (now - lastSendAt > ifeiMessageInterval && !isEqualIfeiMessage(ifei, previousIfei)) {
+  if (now - lastIfeiSendAt > ifeiMessageInterval && !isEqualIfeiMessage(ifei, previousIfei)) {
     previousIfei = ifei;
     previousIfei.header.ms = millis();
     sendMessage(previousIfei);
