@@ -64,79 +64,73 @@ static uint16_t previousHydPressR;
 void loop() {
   DcsBios::loop();
 
-  static uint32_t messageInterval = 40; // 1000 / messageInterval Hz max
+  static uint32_t messageInterval = 33; // 1000 / messageInterval Hz max
   static uint32_t ifeiMessageInterval = 250;
   static uint32_t lastSendAt = 0;
   static uint32_t lastIfeiSendAt = 0;
   const uint32_t now = millis();
 
-  if (now - lastIfeiSendAt < ifeiMessageInterval) {
-    return;
-  }
-
   // Limit IFEI refresh rate due to its data size and update frequency
-  if (now - lastSendAt > messageInterval * 5 && !isEqualIfeiMessage(ifei, previousIfei)) {
+  if (now - lastSendAt > ifeiMessageInterval && !isEqualIfeiMessage(ifei, previousIfei)) {
     previousIfei = ifei;
     previousIfei.header.ms = millis();
     sendMessage(previousIfei);
-  }
-  lastIfeiSendAt = now;
-
-  if (now - lastSendAt < messageInterval) {
-    return;
+    lastIfeiSendAt = now;
   }
 
-  if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
-    previousAltimeter = altimeter;
-    previousAltimeter.header.ms = millis();
-    sendMessage(previousAltimeter);
-  }
+  if (now - lastSendAt > messageInterval) {
+    if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
+      previousAltimeter = altimeter;
+      previousAltimeter.header.ms = millis();
+      sendMessage(previousAltimeter);
+    }
 
-  if (!isEqualRadarAltimeterMessage(radarAltimeter, previousRadarAltimeter)) {
-    previousRadarAltimeter = radarAltimeter;
-    previousRadarAltimeter.header.ms = millis();
-    sendMessage(previousRadarAltimeter);
-  }
+    if (!isEqualRadarAltimeterMessage(radarAltimeter, previousRadarAltimeter)) {
+      previousRadarAltimeter = radarAltimeter;
+      previousRadarAltimeter.header.ms = millis();
+      sendMessage(previousRadarAltimeter);
+    }
 
-  if (airspeed != previousAirspeed) {
-    previousAirspeed = airspeed;
-    sendIntegerMessage(ValueName::Airspeed, airspeed);
-  }
+    if (airspeed != previousAirspeed) {
+      previousAirspeed = airspeed;
+      sendIntegerMessage(ValueName::Airspeed, airspeed);
+    }
 
-  if (vsi != previousVsi) {
-    previousVsi = vsi;
-    sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
-  }
+    if (vsi != previousVsi) {
+      previousVsi = vsi;
+      sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
+    }
 
-  if (voltU != previousVoltU) {
-    previousVoltU = voltU;
-    sendIntegerMessage(ValueName::VoltU, voltU);
-  }
+    if (voltU != previousVoltU) {
+      previousVoltU = voltU;
+      sendIntegerMessage(ValueName::VoltU, voltU);
+    }
 
-  if (voltE != previousVoltE) {
-    previousVoltE = voltE;
-    sendIntegerMessage(ValueName::VoltE, voltE);
-  }
+    if (voltE != previousVoltE) {
+      previousVoltE = voltE;
+      sendIntegerMessage(ValueName::VoltE, voltE);
+    }
 
-  if (hydIndBrake != previousHydIndBrake) {
-    previousHydIndBrake = hydIndBrake;
-    sendIntegerMessage(ValueName::BrakePressure, hydIndBrake);
-  }
+    if (hydIndBrake != previousHydIndBrake) {
+      previousHydIndBrake = hydIndBrake;
+      sendIntegerMessage(ValueName::BrakePressure, hydIndBrake);
+    }
 
-  if (cabinAltIndicator != previousCabinAltIndicator) {
-    previousCabinAltIndicator = cabinAltIndicator;
-    sendIntegerMessage(ValueName::CabinAltitudeIndicator, cabinAltIndicator);
-  }
+    if (cabinAltIndicator != previousCabinAltIndicator) {
+      previousCabinAltIndicator = cabinAltIndicator;
+      sendIntegerMessage(ValueName::CabinAltitudeIndicator, cabinAltIndicator);
+    }
 
-  if (hydPressL != previousHydPressL) {
-    previousHydPressL = hydPressL;
-    sendIntegerMessage(ValueName::HydraulicPressureLeft, hydPressL);
-  }
+    if (hydPressL != previousHydPressL) {
+      previousHydPressL = hydPressL;
+      sendIntegerMessage(ValueName::HydraulicPressureLeft, hydPressL);
+    }
 
-  if (hydPressR != previousHydPressR) {
-    previousHydPressR = hydPressR;
-    sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
-  }
+    if (hydPressR != previousHydPressR) {
+      previousHydPressR = hydPressR;
+      sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
+    }
 
-  lastSendAt = now;
+    lastSendAt = now;
+  }
 }
