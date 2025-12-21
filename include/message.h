@@ -2,6 +2,10 @@
 
 #include <cstring>
 
+#ifndef ESP_CHANNEL
+  #define ESP_CHANNEL 1
+#endif
+
 #pragma pack(push, 1)
 enum class MessageCategory : uint8_t {
   Common,

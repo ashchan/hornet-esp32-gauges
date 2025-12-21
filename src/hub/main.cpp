@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <esp_now.h>
 #include <cstdint>
 
@@ -21,6 +22,7 @@ static uint8_t BROADCAST_MAC[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Bro
 static void initEspNow() {
   delay(1000);
   WiFi.mode(WIFI_STA);
+  esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
   esp_err_t err = esp_now_init();
   //Serial.printf("esp_now_init: %s\n", esp_err_to_name(err));
 

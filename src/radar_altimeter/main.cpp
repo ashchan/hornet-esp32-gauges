@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <WiFi.h>
+#include <esp_wifi.h>
 #include <esp_now.h>
 #include <lvgl.h>
 #include "Display_ST77916.h"
@@ -78,6 +79,7 @@ void updateRendering() {
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
+  esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("ESP-NOW init failed");
