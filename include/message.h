@@ -129,6 +129,8 @@ enum class ValueName : uint8_t {
   CabinAltitudeIndicator,
   HydraulicPressureLeft,
   HydraulicPressureRight,
+  InstrumentLighting,
+  ConsoleLighting,j
 };
 
 static bool isEqualAltimeterMessage(const AltimeterMessage& a, const AltimeterMessage& b) {

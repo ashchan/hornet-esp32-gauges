@@ -17,6 +17,8 @@ static uint16_t hydIndBrake;
 static uint16_t cabinAltIndicator;
 static uint16_t hydPressL;
 static uint16_t hydPressR;
+static uint16_t instrumentLighting;
+static uint16_t consoleLighting;
 
 uint16_t parseU16(const char *s);
 uint8_t parseU8(const char *s);
@@ -34,6 +36,16 @@ void onCockkpitLightModeSwChange(unsigned int newValue) {
   ifei.colorMode = newValue;
 }
 DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MODE_SW, onCockkpitLightModeSwChange);
+
+void onInstrIntLtChange(unsigned int newValue) {
+  instrumentLighting = newValue;
+}
+DcsBios::IntegerBuffer instrIntLtBuffer(FA_18C_hornet_INSTR_INT_LT, onInstrIntLtChange);
+
+void onConsoleIntLtChange(unsigned int newValue) {
+  consoleLighting = newValue;
+}
+DcsBios::IntegerBuffer consoleIntLtBuffer(FA_18C_hornet_CONSOLE_INT_LT, onConsoleIntLtChange);
 #pragma endregion DCS Common Data
 
 #pragma region Airspeed

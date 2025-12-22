@@ -63,6 +63,8 @@ static uint16_t previousHydIndBrake;
 static uint16_t previousCabinAltIndicator;
 static uint16_t previousHydPressL;
 static uint16_t previousHydPressR;
+static uint16_t previousInstrumentLighting;
+static uint16_t previousConsoleLighting;
 
 void loop() {
   DcsBios::loop();
@@ -132,6 +134,16 @@ void loop() {
     if (hydPressR != previousHydPressR) {
       previousHydPressR = hydPressR;
       sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
+    }
+
+    if (instrumentLighting != previousInstrumentLighting) {
+      previousInstrumentLighting = instrumentLighting;
+      sendIntegerMessage(ValueName::InstrumentLighting, instrumentLighting);
+    }
+
+    if (consoleLighting != previousConsoleLighting) {
+      previousConsoleLighting = consoleLighting;
+      sendIntegerMessage(ValueName::ConsoleLighting, consoleLighting);
     }
 
     lastSendAt = now;
