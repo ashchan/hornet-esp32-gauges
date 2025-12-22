@@ -13,6 +13,7 @@ Key stability changes:
 #include <esp_wifi.h>
 #include <esp_now.h>
 #include <TFT_eSPI.h>
+#include "TFT_helper.h"
 #include "message.h"
 
 #include "BatteryBackground.h" // uint16_t Battery[240*240]
@@ -30,8 +31,8 @@ TFT_eSprite needleE(&tft);     // right needle
 // ── State updated by DCS callbacks (ISR-safe) ───────────────────────────────────
 static volatile uint16_t rawU = 0;
 static volatile uint16_t rawE = 0;
-static volatile bool     dirtyU = false;
-static volatile bool     dirtyE = false;
+static volatile bool dirty = false;
+static volatile uint16_t brightness = 0;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
@@ -69,11 +70,15 @@ static void initEspNowClient() {
       message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::VoltE) {
         rawE = message.value;
-        dirtyE = true;
+        dirty = true;
       }
       if (message.name == ValueName::VoltE) {
         rawU = message.value;
-        dirtyU = true;
+        dirty = true;
+      }
+      if (message.name == ValueName::ConsoleLighting) {
+        brightness = message.value;
+        dirty = true;
       }
       break;
     default:
@@ -89,6 +94,7 @@ void setup() {
 
   tft.begin();
   tft.fillScreen(TFT_BLACK);
+  setBrightness(brightness);
   tft.setSwapBytes(true); // for 16-bit image arrays
 
   // Create sprites once; reuse forever
@@ -118,20 +124,19 @@ void setup() {
 // ── Main loop ──────────────────────────────────────────────────────────────────
 void loop() {
   const uint32_t now = millis();
-  const bool anyDirty = dirtyU || dirtyE;
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
   const bool watchdogKick = (now - lastFrameMs) >= WATCHDOG_MS;
 
-  if ((anyDirty && frameDue) || watchdogKick) {
+  if ((dirty && frameDue) || watchdogKick) {
     // Snapshot volatile values once (avoid tearing)
     noInterrupts();
     const uint16_t u = rawU;
     const uint16_t e = rawE;
-    dirtyU = false;
-    dirtyE = false;
+    dirty = false;
     interrupts();
 
     renderGauge(map_u(u), map_e(e));
+    setBrightness(brightness);
     lastFrameMs = now;
   }
 

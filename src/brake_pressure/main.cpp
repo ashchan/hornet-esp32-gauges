@@ -12,6 +12,7 @@ Stable ISR-safe version:
 #include <esp_wifi.h>
 #include <esp_now.h>
 #include <TFT_eSPI.h>
+#include "TFT_helper.h"
 #include "message.h"
 
 #include "brakePressBackground.h"  // uint16_t brakePressBackground[240*240]
@@ -27,6 +28,7 @@ TFT_eSprite sprBack(&tft);
 TFT_eSprite sprNeedle(&tft);
 
 static volatile bool dirtyBrake = true;
+static volatile uint16_t brightness = 0;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
@@ -70,6 +72,10 @@ static void initEspNowClient() {
         lastMessage = message;
         dirtyBrake = true;
       }
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        dirtyBrake = true;
+      }
       break;
     default:
       // ignore
@@ -83,6 +89,7 @@ void setup() {
 
   tft.init();
   tft.fillScreen(TFT_BLACK);
+  setBrightness(brightness);
 
   // background canvas
   sprBack.setColorDepth(COLOR_DEPTH);
@@ -115,6 +122,7 @@ void loop() {
     interrupts();
 
     renderGauge(mapBrakeValue(lastMessage.value));
+    setBrightness(brightness);
     lastFrameMs = now;
   }
 

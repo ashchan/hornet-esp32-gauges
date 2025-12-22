@@ -13,6 +13,7 @@ Stability design:
 #include <esp_wifi.h>
 #include <esp_now.h>
 #include <TFT_eSPI.h>
+#include "TFT_helper.h"
 #include "message.h"
 
 // ── Assets ─────────────────────────────────────────────────────────────────────
@@ -33,8 +34,8 @@ TFT_eSprite needle2(&tft);
 // ── DCS-driven state (updated in ISR-safe callbacks) ───────────────────────────
 static volatile uint16_t raw1 = 0;      // left hyd (0x750e)
 static volatile uint16_t raw2 = 0;      // right hyd (0x7510)
-static volatile bool dirty1 = true;
-static volatile bool dirty2 = true;
+static volatile uint16_t brightness = 0;
+static volatile bool dirty = true;
 static volatile uint32_t lastDcsMs = 0;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
@@ -77,11 +78,15 @@ static void initEspNowClient() {
       message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::HydraulicPressureLeft) {
         raw1 = message.value;
-        dirty1 = true;
+        dirty = true;
       }
       if (message.name == ValueName::HydraulicPressureRight) {
         raw2 = message.value;
-        dirty2 = true;
+        dirty = true;
+      }
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        dirty = true;
       }
       break;
     default:
@@ -96,7 +101,7 @@ void setup() {
 
   tft.init();
   tft.fillScreen(TFT_BLACK);
-  // Optional: tft.setRotation(3);
+  setBrightness(brightness);
 
   // Create background canvas once
   gaugeBack.setColorDepth(colorDepth);
@@ -126,21 +131,20 @@ void setup() {
 // ── Main loop ──────────────────────────────────────────────────────────────────
 void loop() {
   const uint32_t now = millis();
-  const bool anyDirty   = dirty1 || dirty2;
   const bool frameDue   = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
   const bool dcsActive  = (now - lastDcsMs) < 2000;
   const bool watchdog   = dcsActive && ((now - lastFrameMs) >= WATCHDOG_MS);
 
-  if ((anyDirty && frameDue) || watchdog) {
+  if ((dirty && frameDue) || watchdog) {
     // snapshot once to avoid tearing
     noInterrupts();
     const uint16_t r1 = raw1;
     const uint16_t r2 = raw2;
-    dirty1 = false;
-    dirty2 = false;
+    dirty = false;
     interrupts();
 
     renderGauge(map_hyd(r1), map_hyd(r2));
+    setBrightness(brightness);
     lastFrameMs = now;
   }
 }
