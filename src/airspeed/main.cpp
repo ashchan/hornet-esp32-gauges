@@ -39,10 +39,12 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
-bool hasNewMessage = false;
-IntegerMessage lastMessage = {};
+uint16_t brightness = 0;
+uint16_t airspeed = 65530 / 2;
+bool dirty = true;
 void updateRendering() {
-  lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65530, 0, 3500));
+  lv_img_set_angle(imgNeedle, map(airspeed, 0, 65530, 0, 3500));
+  setBrightness(brightness);
 }
 
 static void initEspNowClient() {
@@ -61,20 +63,16 @@ static void initEspNowClient() {
     }
 
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
-    IntegerMessage message{};
-    switch (hdr->category) {
-    case MessageCategory::Integer:
-      if (len != (int)sizeof(IntegerMessage)) {
-        return;
-      }
-      message = *reinterpret_cast<const IntegerMessage *>(data);
+    if (hdr->category == MessageCategory::Integer) {
+      IntegerMessage message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::Airspeed) {
-        lastMessage = message;
-        hasNewMessage = true;
+        airspeed = message.value;
+        dirty = true;
       }
-      break;
-    default:
-      break;
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        dirty = true;
+      }
     }
   });
 }
@@ -87,7 +85,6 @@ void setup() {
 
   ST77916_Init();
   Backlight_Init();
-  Set_Backlight(25);
 
   lv_init();
 
@@ -119,10 +116,9 @@ void setup() {
   imgNeedle = lv_img_create(lv_scr_act());
   lv_img_set_src(imgNeedle, &airspeedNeedle);
 
-  // Set the pivot to the bottom center of the image
   lv_point_t pivot = {
-    (lv_coord_t)(airspeedNeedle.header.w / 2),   // horizontally centered
-    (lv_coord_t)(airspeedNeedle.header.h / 2)    // very bottom
+    (lv_coord_t)(airspeedNeedle.header.w / 2),
+    (lv_coord_t)(airspeedNeedle.header.h / 2)
   };
   lv_img_set_pivot(imgNeedle, pivot.x, pivot.y);
 
@@ -141,8 +137,8 @@ void loop() {
   lv_tick_inc(dt);
 
   static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
+  if (now - lastUpdatedAt > 40 && dirty) {
+    dirty = false;
     lastUpdatedAt = now;
     updateRendering();
   }

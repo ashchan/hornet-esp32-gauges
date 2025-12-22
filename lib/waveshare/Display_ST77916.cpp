@@ -1,5 +1,6 @@
 #include "Display_ST77916.h"
 
+#include <Arduino.h>
 #include <stdlib.h>
 #include <string.h>
 #include "esp_intr_alloc.h"
@@ -387,5 +388,15 @@ void Set_Backlight(uint8_t Light)
     if(Backlight == 1000)
       Backlight = 1024;
     ledcWrite(LCD_Backlight_PIN, Backlight);
+  }
+}
+
+// value: 0-65536, map to DEFAULT_BRIGHTNESS - 80 (display content even if input is 0)
+void setBrightness(uint16_t value) {
+  static uint16_t oldValue = DEFAULT_BRIGHTNESS;
+  uint16_t newValue = map(value, 0, 65535, DEFAULT_BRIGHTNESS, 80);
+  if (oldValue != newValue) {
+    oldValue = newValue;
+    Set_Backlight(newValue);
   }
 }

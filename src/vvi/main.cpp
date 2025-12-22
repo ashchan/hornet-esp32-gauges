@@ -38,17 +38,17 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
   lv_disp_flush_ready(disp);
 }
 
-bool hasNewMessage = false;
-IntegerMessage lastMessage = {};
+uint16_t vvi = 65535 / 2;
+uint16_t brightness = 0;
+bool dirty = true;
 void updateRendering() {
-  // Map the DCS value (0–65535) to 0–3600 (tenths of degrees)
-  int16_t angle = map(lastMessage.value, 0, 65535, 0, 3600);
+  int16_t angle = map(vvi, 0, 65535, 900, 4500);
+  if (angle < 0) {
+    angle -= 3600; // wrap around
+  }
 
-  // Reverse direction (make clockwise), and offset so 0 points right (90°)
-  int16_t adjustedAngle = 900 + angle;
-  if (adjustedAngle < 0) adjustedAngle -= 3600; // wrap around
-
-  lv_img_set_angle(img_Needle, adjustedAngle);
+  lv_img_set_angle(img_Needle, angle);
+  setBrightness(brightness);
 }
 
 static void initEspNowClient() {
@@ -60,25 +60,17 @@ static void initEspNowClient() {
   }
 
   esp_now_register_recv_cb([](const esp_now_recv_info_t* info, const uint8_t* data, int len) {
-    if (len < (int)sizeof(MessageHeader)) {
-      return;
-    }
-
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
-    IntegerMessage message{};
-    switch (hdr->category) {
-    case MessageCategory::Integer:
-      if (len != (int)sizeof(IntegerMessage)) {
-        return;
-      }
-      message = *reinterpret_cast<const IntegerMessage *>(data);
+    if (hdr->category == MessageCategory::Integer) {
+      IntegerMessage message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::VerticalVelocityIndicator) {
-        lastMessage = message;
-        hasNewMessage = true;
+        vvi = message.value;
+        dirty = true;
       }
-      break;
-    default:
-      break;
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        dirty = true;
+      }
     }
   });
 }
@@ -91,7 +83,6 @@ void setup() {
 
   ST77916_Init();
   Backlight_Init();
-  Set_Backlight(25);
 
   lv_init();
 
@@ -146,8 +137,8 @@ void loop() {
   lv_tick_inc(dt);
 
   static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
+  if (now - lastUpdatedAt > 40 && dirty) {
+    dirty = false;
     lastUpdatedAt = now;
     updateRendering();
   }

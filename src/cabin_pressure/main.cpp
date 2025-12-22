@@ -31,8 +31,10 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 bool hasNewMessage = false;
 IntegerMessage lastMessage = {};
+uint16_t brightness = 0;
 void updateRendering() {
   lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65535, -1800, 1160));
+  setBrightness(brightness);
 }
 
 static void initEspNowClient() {
@@ -62,6 +64,10 @@ static void initEspNowClient() {
         lastMessage = message;
         hasNewMessage = true;
       }
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        hasNewMessage = true;
+      }
       break;
     default:
       break;
@@ -77,7 +83,7 @@ void setup() {
 
   ST77916_Init();
   Backlight_Init();
-  Set_Backlight(25);
+  setBrightness();
 
   lv_init();
 

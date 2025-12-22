@@ -42,6 +42,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 }
 
 static RadarAltimeterMessage lastMessage = {};
+uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
 
 void updateRendering() {
@@ -75,6 +76,7 @@ void updateRendering() {
   }
 
   lv_obj_set_style_translate_y(img_radarAltOff, (int16_t)ty, 0);
+  setBrightness(brightness);
 }
 
 static void initEspNowClient() {
@@ -93,16 +95,16 @@ static void initEspNowClient() {
     }
 
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
-    switch (hdr->category) {
-    case MessageCategory::RadarAltimeter:
-      if (len != (int)sizeof(RadarAltimeterMessage)) {
-        return;
-      }
+    if (hdr->category ==  MessageCategory::RadarAltimeter) {
       lastMessage = *reinterpret_cast<const RadarAltimeterMessage *>(data);
       hasNewMessage = true;
-      break;
-    default:
-      break;
+    }
+    if (hdr->category == MessageCategory::Integer) {
+      IntegerMessage message = *reinterpret_cast<const IntegerMessage *>(data);
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        hasNewMessage = true;
+      }
     }
   });
 }
@@ -115,7 +117,7 @@ void setup() {
 
   ST77916_Init();
   Backlight_Init();
-  Set_Backlight(25);
+  setBrightness();
 
   lv_init();
 

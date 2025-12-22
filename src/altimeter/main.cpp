@@ -107,6 +107,7 @@ void onStbyPressSet2Change(unsigned int newValue) {
 }
 
 static AltimeterMessage lastMessage = {};
+uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
 
 void updateRendering() {
@@ -116,6 +117,7 @@ void updateRendering() {
   onStbyPressSet0Change(lastMessage.pressSet0);
   onStbyPressSet1Change(lastMessage.pressSet1);
   onStbyPressSet2Change(lastMessage.pressSet2);
+  setBrightness(brightness);
 }
 
 static void initEspNowClient() {
@@ -134,6 +136,7 @@ static void initEspNowClient() {
     }
 
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
+    IntegerMessage integerMessage;
     switch (hdr->category) {
     case MessageCategory::Altimeter:
       if (len != (int)sizeof(AltimeterMessage)) {
@@ -141,6 +144,13 @@ static void initEspNowClient() {
       }
       lastMessage = *reinterpret_cast<const AltimeterMessage *>(data);
       hasNewMessage = true;
+      break;
+    case MessageCategory::Integer:
+      integerMessage = *reinterpret_cast<const IntegerMessage *>(data);
+      if (integerMessage.name == ValueName::InstrumentLighting) {
+        brightness = integerMessage.value;
+        hasNewMessage = true;
+      }
       break;
     default:
       break;
@@ -156,7 +166,7 @@ void setup() {
 
   ST77916_Init();
   Backlight_Init();
-  Set_Backlight(25);
+  setBrightness();
 
   lv_init();
 
