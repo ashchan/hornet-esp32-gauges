@@ -38,6 +38,7 @@ void updateRendering() {
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
   esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_max_tx_power(ESP_MAX_TX_POWER);
 
   if (esp_now_init() != ESP_OK) {
     Serial.println("ESP-NOW init failed");

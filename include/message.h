@@ -6,6 +6,10 @@
   #define ESP_CHANNEL 1
 #endif
 
+#ifndef ESP_MAX_TX_POWER
+  #define ESP_MAX_TX_POWER 10
+#endif
+
 #pragma pack(push, 1)
 enum class MessageCategory : uint8_t {
   Common,

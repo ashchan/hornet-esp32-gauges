@@ -23,6 +23,7 @@ static void initEspNow() {
   delay(1000);
   WiFi.mode(WIFI_STA);
   esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_max_tx_power(ESP_MAX_TX_POWER);
   esp_err_t err = esp_now_init();
   //Serial.printf("esp_now_init: %s\n", esp_err_to_name(err));
 
