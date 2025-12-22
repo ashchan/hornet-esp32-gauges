@@ -10,3 +10,4 @@
 *.su
 /.cache/
 /firmware/
+idf_component.yml.orig
