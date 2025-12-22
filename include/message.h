@@ -7,7 +7,7 @@
 #endif
 
 #ifndef ESP_MAX_TX_POWER
-  #define ESP_MAX_TX_POWER 10
+  #define ESP_MAX_TX_POWER 20
 #endif
 
 #pragma pack(push, 1)
