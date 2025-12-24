@@ -8,7 +8,7 @@
 #include <WiFi.h>
 #include <esp_now.h>
 #include <lvgl.h>
-#include "185/Display_ST77916.h"
+#include "Display_ST77916.h"
 #include "message.h"
 
 // LVGL bitmaps

@@ -13,7 +13,7 @@ Key stability changes:
 #include <esp_wifi.h>
 #include <esp_now.h>
 #include <TFT_eSPI.h>
-#include "128/TFT_helper.h"
+#include "TFT_helper.h"
 #include "message.h"
 
 #include "BatteryBackground.h" // uint16_t Battery[240*240]
