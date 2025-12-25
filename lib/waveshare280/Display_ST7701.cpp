@@ -46,7 +46,7 @@ void ST7701_Init()
     .sclk_io_num = LCD_CLK_PIN,
     .quadwp_io_num = -1,
     .quadhd_io_num = -1,
-    .max_transfer_sz = 64, // ESP32 S3 max size is 64Kbytes
+    .max_transfer_sz = 64 * 1024, // ESP32 S3 max size is 64Kbytes
   };
   spi_bus_initialize(SPI2_HOST, &buscfg, SPI_DMA_CH_AUTO);
   spi_device_interface_config_t devcfg = {
