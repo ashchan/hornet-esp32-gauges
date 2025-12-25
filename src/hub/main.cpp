@@ -55,6 +55,7 @@ void setup() {
 static IfeiMessage previousIfei{};
 static AltimeterMessage previousAltimeter{};
 static RadarAltimeterMessage previousRadarAltimeter{};
+static SaiMessage previousSai{};
 static uint16_t previousAirspeed;
 static uint16_t previousVsi;
 static uint16_t previousVoltU;
@@ -94,6 +95,12 @@ void loop() {
       previousRadarAltimeter = radarAltimeter;
       previousRadarAltimeter.header.ms = millis();
       sendMessage(previousRadarAltimeter);
+    }
+
+    if (!isEqualSaiMessage(sai, previousSai)) {
+      previousSai = sai;
+      previousSai.header.ms = millis();
+      sendMessage(previousSai);
     }
 
     if (airspeed != previousAirspeed) {

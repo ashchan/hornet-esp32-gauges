@@ -9,6 +9,7 @@
 static AltimeterMessage altimeter{};
 static RadarAltimeterMessage radarAltimeter{};
 static IfeiMessage ifei{};
+static SaiMessage sai{};
 static uint16_t airspeed;
 static uint16_t vsi;
 static uint16_t voltU;
@@ -424,6 +425,49 @@ void onIfeiDispIntLtChange(unsigned int newValue) {
 }
 DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT_A, 0xffff, 0, onIfeiDispIntLtChange);
 #pragma endregion IFEI
+
+#pragma region SARI
+void onSaiSlipBallChange(unsigned int v) {
+  sai.slipBall = v;
+}
+DcsBios::IntegerBuffer saiSlipBallBuffer(FA_18C_hornet_SAI_SLIP_BALL, onSaiSlipBallChange);
+
+void onSaiBankChange(unsigned int v) {
+  sai.bank = v;
+}
+DcsBios::IntegerBuffer saiBankBuffer(FA_18C_hornet_SAI_BANK, onSaiBankChange);
+
+void onSaiRateOfTurnChange(unsigned int v) {
+  sai.rateOfTurn = v;
+}
+DcsBios::IntegerBuffer saiRateOfTurnBuffer(FA_18C_hornet_SAI_RATE_OF_TURN, onSaiRateOfTurnChange);
+
+void onSaiManPitchAdjChange(unsigned int v) {
+  sai.manPitchAdj = v;
+}
+DcsBios::IntegerBuffer saiManPitchAdjBuffer(FA_18C_hornet_SAI_MAN_PITCH_ADJ, onSaiManPitchAdjChange);
+
+void onSaiPitchChange(unsigned int v) {
+  sai.pitch = v;
+}
+DcsBios::IntegerBuffer saiPitchBuffer(FA_18C_hornet_SAI_PITCH, onSaiPitchChange);
+
+void onSaiAttWarningFlagChange(unsigned int v) {
+  sai.attWarningFlag = v;
+}
+DcsBios::IntegerBuffer saiAttWarningFlagBuffer(FA_18C_hornet_SAI_ATT_WARNING_FLAG, onSaiAttWarningFlagChange);
+
+void onSaiPointerHorChange(unsigned int v) {
+  sai.pointerHor = v;
+}
+DcsBios::IntegerBuffer saiPointerHorBuffer(FA_18C_hornet_SAI_POINTER_HOR, onSaiPointerHorChange);
+
+void onSaiPointerVerChange(unsigned int v) {
+  sai.pointerVer = v;
+}
+DcsBios::IntegerBuffer saiPointerVerBuffer(FA_18C_hornet_SAI_POINTER_VER, onSaiPointerVerChange);
+
+#pragma endregion SARI
 
 #pragma region Helpers
 uint16_t parseU16(const char *s) {

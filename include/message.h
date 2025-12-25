@@ -16,7 +16,8 @@ enum class MessageCategory : uint8_t {
   IFEI,
   Altimeter,
   RadarAltimeter,
-  Integer
+  Integer,
+  SAI,
 };
 
 enum class ValueName : uint8_t;
@@ -118,6 +119,19 @@ struct __attribute__((packed)) IfeiMessage {
   uint16_t dispIntLt;
   uint16_t colorMode;
 };
+
+struct __attribute__((packed)) SaiMessage {
+  MessageHeader header{category: MessageCategory::SAI};
+
+  uint16_t slipBall;
+  uint16_t bank;
+  uint16_t rateOfTurn;
+  uint16_t manPitchAdj;
+  uint16_t pitch;
+  uint16_t attWarningFlag;
+  uint16_t pointerHor;
+  uint16_t pointerVer;
+};
 #pragma pack(pop)
 
 enum class ValueName : uint8_t {
@@ -130,7 +144,7 @@ enum class ValueName : uint8_t {
   HydraulicPressureLeft,
   HydraulicPressureRight,
   InstrumentLighting,
-  ConsoleLighting,j
+  ConsoleLighting,
 };
 
 static bool isEqualAltimeterMessage(const AltimeterMessage& a, const AltimeterMessage& b) {
@@ -152,4 +166,11 @@ static bool isEqualIfeiMessage(const IfeiMessage& a, const IfeiMessage& b) {
   return std::memcmp(reinterpret_cast<const uint8_t*>(&a) + off,
                      reinterpret_cast<const uint8_t*>(&b) + off,
                      sizeof(IfeiMessage) - off) == 0;
+}
+
+static bool isEqualSaiMessage(const SaiMessage& a, const SaiMessage& b) {
+  constexpr size_t off = offsetof(SaiMessage, slipBall);
+  return std::memcmp(reinterpret_cast<const uint8_t*>(&a) + off,
+                     reinterpret_cast<const uint8_t*>(&b) + off,
+                     sizeof(SaiMessage) - off) == 0;
 }
