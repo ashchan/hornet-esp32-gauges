@@ -1,18 +1,17 @@
-// F18_SARI_v2 
+// F18_SARI_v2
 // ESP32-S3 + ST7701 480x480 + LVGL8 + DCS-BIOS
 // Author: Shef, https://github.com/shef-code/F18_SARI_v2
-
-
-#define DCSBIOS_DEFAULT_SERIAL
-#define DCSBIOS_DISABLE_SERVO
-
 #include <Arduino.h>
+#include <WiFi.h>
+#include <esp_wifi.h>
+#include <esp_now.h>
 #include <lvgl.h>
 #include <math.h>
 
 #include "I2C_Driver.h"
 #include "TCA9554PWR.h"
 #include "Display_ST7701.h"
+#include "message.h"
 
 extern "C" {
   extern const lv_img_dsc_t SARIBackground;
@@ -208,10 +207,21 @@ void onSaiPointerVerChange(unsigned int v) {
 }
 //DcsBios::IntegerBuffer saiPointerVerBuffer(0x756a, 0xffff, 0, onSaiPointerVerChange);
 
+static SaiMessage lastMessage = {};
+uint16_t brightness = 0;
+volatile bool hasNewMessage = false;
 
+#define DEFAULT_BRIGHTNESS 10
+void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
+  static uint16_t oldValue = DEFAULT_BRIGHTNESS;
+  uint16_t newValue = map(value, 0, 65535, DEFAULT_BRIGHTNESS, 80);
+  if (oldValue != newValue) {
+    oldValue = newValue;
+    Set_Backlight(newValue);
+  }
+}
 
-// ----------------- Apply mailboxes in main thread (LVGL-safe) -----------------
-static void ui_apply_mailboxes() {
+static void updateRendering() {
   if (!mb_dirty) return;
 
   noInterrupts();
@@ -330,7 +340,40 @@ static void ui_apply_mailboxes() {
       last_caged_angle = target;
     }
   }
+
+  setBrightness(brightness);
 }
+
+static void initEspNowClient() {
+  WiFi.mode(WIFI_STA);
+  esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
+  esp_wifi_set_max_tx_power(ESP_MAX_TX_POWER);
+
+  if (esp_now_init() != ESP_OK) {
+    Serial.println("ESP-NOW init failed");
+    return;
+  }
+
+  esp_now_register_recv_cb([](const esp_now_recv_info_t* info, const uint8_t* data, int len) {
+    if (len < (int)sizeof(MessageHeader)) {
+      return;
+    }
+
+    const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
+    if (hdr->category ==  MessageCategory::SAI) {
+      lastMessage = *reinterpret_cast<const SaiMessage *>(data);
+      hasNewMessage = true;
+    }
+    if (hdr->category == MessageCategory::Integer) {
+      IntegerMessage message = *reinterpret_cast<const IntegerMessage *>(data);
+      if (message.name == ValueName::InstrumentLighting) {
+        brightness = message.value;
+        hasNewMessage = true;
+      }
+    }
+  });
+}
+
 
 // ----------------- Setup / Loop -----------------
 void setup() {
@@ -342,7 +385,7 @@ void setup() {
 
   LCD_Init();
   Backlight_Init();
-  Set_Backlight(50);
+  setBrightness();
 
   lv_init();
   lv_disp_draw_buf_init(&draw_buf, buf1, nullptr, DISP_WIDTH * BUF_LINES);
@@ -383,7 +426,7 @@ void setup() {
     lv_img_set_pivot(globe_img, pivot_x, pivot_y);
     lv_obj_set_pos(globe_img, (globe_w / 2) - pivot_x, (globe_h / 2) - pivot_y);
   }
-  
+
   lv_obj_t *sari_bg = lv_img_create(scr);
   lv_img_set_src(sari_bg, &SARIBackground);
   lv_obj_center(sari_bg);
@@ -431,7 +474,6 @@ void setup() {
   mb_pointerHorRaw = 32767; // at/below this = no up travel
   mb_pointerVerRaw = 32767;     // zero left push
   mb_dirty     = true;
-  ui_apply_mailboxes();
 
   // Force neutral position
   uint16_t DCS_MID = 32782;
@@ -441,12 +483,25 @@ void setup() {
   onSaiRateOfTurnChange(DCS_MID);
   onSaiManPitchAdjChange(DCS_MID);
   onSaiAttWarningFlagChange(65535);
+  updateRendering();
+
+  initEspNowClient();
 }
 
 void loop() {
-  ui_apply_mailboxes();  // apply new DCS data (LVGL-safe)
+  static uint32_t lastTick = millis();
+  const uint32_t now = millis();
+  uint32_t dt = now - lastTick;
+  lastTick = now;
 
-  lv_tick_inc(5);
-  lv_timer_handler();
-  delay(5);
+  lv_tick_inc(dt);
+
+  static uint32_t lastUpdatedAt = 0;
+  if (now - lastUpdatedAt > 40 && hasNewMessage) {
+    hasNewMessage = false;
+    lastUpdatedAt = now;
+    updateRendering();
+  }
+
+  lv_timer_handler();     // Refresh LVGL
 }
