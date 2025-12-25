@@ -102,7 +102,6 @@ static volatile uint16_t mb_bug_raw     = DCS_MID_CODE;  // manual pitch bug
 static volatile uint16_t mb_cage_raw    = 0;             // 0..65535 for SARICaged
 static volatile uint16_t mb_pointerHorRaw  = 0;          // raw DCS (32767..65535 active)
 static volatile uint16_t mb_pointerVerRaw  = 0;          // raw DCS (0..32767 active)
-static volatile bool     mb_dirty       = false;
 
 // UI copies (non-volatile)
 static int16_t  ui_pitch_x10 = 0;
@@ -154,58 +153,42 @@ static void update_globe_position(int16_t pitch_x10, int16_t bank_x10) {
 // ----------------- DCS-BIOS callbacks (ISR-safe: NO LVGL HERE) -----------------
 void onSaiSlipBallChange(unsigned int v) {
   mb_slip_raw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiSlipBallBuffer(0x74ec, 0xffff, 0, onSaiSlipBallChange);
 
 void onSaiBankChange(unsigned int v) {
   // 0..65535 → 0..3600 (tenths°), then rotate 180° for panel orientation
   int32_t t = ((int32_t)v * 3600) / 65535;
   t = (t + 1800) % 3600;
   mb_bank_x10 = (int16_t)t;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiBankBuffer(0x74e6, 0xffff, 0, onSaiBankChange);
 
 void onSaiRateOfTurnChange(unsigned int v) {
   mb_rot_raw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiRateOfTurnBuffer(0x74ee, 0xffff, 0, onSaiRateOfTurnChange);
 
 void onSaiManPitchAdjChange(unsigned int v) {
   mb_bug_raw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiManPitchAdjBuffer(0x74ea, 0xffff, 0, onSaiManPitchAdjChange);
 
 void onSaiPitchChange(unsigned int v) {
   // 0..65535 → -900..+900 tenths deg
   mb_pitch_x10 = (int16_t)map((int)v, 0, 65535, -900, 900);
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiPitchBuffer(0x74e4, 0xffff, 0, onSaiPitchChange);
 
 // SARICaged (store raw, mapping/anim in UI thread)
 void onSaiAttWarningFlagChange(unsigned int v) {
   mb_cage_raw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiAttWarningFlagBuffer(0x74e8, 0xffff, 0, onSaiAttWarningFlagChange);
 
 // Horizontal pointer RAW (active range 32767..65535)
 void onSaiPointerHorChange(unsigned int v) {
   mb_pointerHorRaw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiPointerHorBuffer(0x756c, 0xffff, 0, onSaiPointerHorChange);
 
 // Vertical pointer RAW (active range 0..32767)
 void onSaiPointerVerChange(unsigned int v) {
   mb_pointerVerRaw = (uint16_t)v;
-  mb_dirty = true;
 }
-//DcsBios::IntegerBuffer saiPointerVerBuffer(0x756a, 0xffff, 0, onSaiPointerVerChange);
 
 static SaiMessage lastMessage = {};
 uint16_t brightness = 0;
@@ -222,7 +205,14 @@ void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
 }
 
 static void updateRendering() {
-  if (!mb_dirty) return;
+  onSaiPitchChange(lastMessage.pitch);
+  onSaiBankChange(lastMessage.bank);
+  onSaiSlipBallChange(lastMessage.slipBall);
+  onSaiRateOfTurnChange(lastMessage.rateOfTurn);
+  onSaiManPitchAdjChange(lastMessage.manPitchAdj);
+  onSaiAttWarningFlagChange(lastMessage.attWarningFlag);
+  onSaiPointerHorChange(lastMessage.pointerHor);
+  onSaiPointerVerChange(lastMessage.pointerVer);
 
   noInterrupts();
   int16_t  pitch_x10  = mb_pitch_x10;
@@ -233,7 +223,6 @@ static void updateRendering() {
   uint16_t cage_raw   = mb_cage_raw;
   uint16_t pHorRaw    = mb_pointerHorRaw;  // 32767..65535 active
   uint16_t pVerRaw    = mb_pointerVerRaw;  // 0..32767 active
-  mb_dirty = false;
   interrupts();
 
   // Store copies
@@ -396,7 +385,6 @@ void setup() {
   disp_drv.ver_res      = DISP_HEIGHT;
   disp_drv.draw_buf     = &draw_buf;
   disp_drv.flush_cb     = my_disp_flush;
-  disp_drv.sw_rotate    = 1;
   disp_drv.full_refresh = 0;
   lv_disp_drv_register(&disp_drv);
 
@@ -473,7 +461,6 @@ void setup() {
   // Start pointers at their inactive ends
   mb_pointerHorRaw = 32767; // at/below this = no up travel
   mb_pointerVerRaw = 32767;     // zero left push
-  mb_dirty     = true;
 
   // Force neutral position
   uint16_t DCS_MID = 32782;
