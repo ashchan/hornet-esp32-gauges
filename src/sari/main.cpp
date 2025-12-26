@@ -5,6 +5,7 @@
 #include <WiFi.h>
 #include <esp_wifi.h>
 #include <esp_now.h>
+#include <esp_timer.h>
 #include <lvgl.h>
 #include <math.h>
 
@@ -132,6 +133,11 @@ static void update_globe_position(int16_t pitch_x10, int16_t bank_x10) {
 
   lv_obj_set_pos(globe_img, base_img_x + dx, base_img_y + dy);
 }
+
+static void lv_tick_task(void *arg) {
+  lv_tick_inc(1);
+}
+static esp_timer_handle_t lvgl_tick_timer = nullptr;
 
 static portMUX_TYPE msgMux = portMUX_INITIALIZER_UNLOCKED;
 static SaiMessage lastMessage = {
@@ -332,6 +338,14 @@ void setup() {
   Backlight_Init();
 
   lv_init();
+  const esp_timer_create_args_t tick_args = {
+    .callback = &lv_tick_task,
+    .arg = nullptr,
+    .dispatch_method = ESP_TIMER_TASK,   // safe: runs in esp_timer task
+    .name = "lvgl_tick"
+  };
+  ESP_ERROR_CHECK(esp_timer_create(&tick_args, &lvgl_tick_timer));
+  ESP_ERROR_CHECK(esp_timer_start_periodic(lvgl_tick_timer, 1000)); // 1000us = 1ms
 
   esp_err_t err = esp_lcd_rgb_panel_get_frame_buffer(panel_handle, 2, (void**)&fb0, (void**)&fb1);
   lv_disp_draw_buf_init(&draw_buf, fb0, fb1, DISP_WIDTH * DISP_HEIGHT);
@@ -414,12 +428,7 @@ void setup() {
 }
 
 void loop() {
-  static uint32_t lastTick = millis();
   const uint32_t now = millis();
-  uint32_t dt = now - lastTick;
-  lastTick = now;
-  lv_tick_inc(dt);
-
   static uint32_t lastUpdatedAt = 0;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;
@@ -427,9 +436,9 @@ void loop() {
     updateRendering();
   }
 
-  static uint32_t last_lv = 0;
-  if (millis() - last_lv >= 5) {
-    last_lv = millis();
+  static uint32_t lastLvglTimerHandlerAt = 0;
+  if (now - lastLvglTimerHandlerAt >= 5) {
+    lastLvglTimerHandlerAt = now;
     lv_timer_handler();
   }
 }
