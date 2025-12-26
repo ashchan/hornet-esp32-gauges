@@ -140,6 +140,7 @@ void loop() {
     reset();
     dirty = false;
     renderGauge(map_u(0), map_e(0));
+    setBrightness(0);
     return;
   }
 
@@ -148,11 +149,12 @@ void loop() {
     noInterrupts();
     const uint16_t u = rawU;
     const uint16_t e = rawE;
+    const uint8_t b = brightness;
     dirty = false;
     interrupts();
 
     renderGauge(map_u(u), map_e(e));
-    setBrightness(brightness);
+    setBrightness(b);
     lastFrameMs = now;
   }
 

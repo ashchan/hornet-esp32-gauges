@@ -49,7 +49,6 @@ void reset() {
   resetting = false;
   dirtyBrake = false;
   brightness = 0;
-  lastMessage = {};
 }
 
 static void initEspNowClient() {
@@ -126,12 +125,10 @@ void loop() {
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
 
   if (resetting) {
-    noInterrupts();
     reset();
-    interrupts();
 
-    renderGauge(mapBrakeValue(lastMessage.value));
-    setBrightness(brightness);
+    renderGauge(mapBrakeValue(0));
+    setBrightness(0);
   } else if (dirtyBrake && frameDue) {
     noInterrupts();
     dirtyBrake = false;

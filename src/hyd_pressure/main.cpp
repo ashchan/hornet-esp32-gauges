@@ -139,11 +139,9 @@ void loop() {
   const bool frameDue   = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
 
   if (resetting) {
-    noInterrupts();
     reset();
-    interrupts();
     renderGauge(0, 0);
-    setBrightness(brightness);
+    setBrightness(0);
     return;
   }
 
