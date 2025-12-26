@@ -33,11 +33,11 @@ static volatile uint16_t rawU = 0;
 static volatile uint16_t rawE = 0;
 static volatile bool dirty = false;
 static volatile uint16_t brightness = 0;
+static volatile bool resetting = false;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
 static const uint32_t FRAME_INTERVAL_MS = 33;  // ~30 FPS
-static const uint32_t WATCHDOG_MS       = 500; // force refresh if DCS active
 
 // ── Forward decls ──────────────────────────────────────────────────────────────
 static inline int16_t map_u(uint16_t v) { return map(v, 0, 65535, -150, -30); } // left needle (U)
@@ -80,11 +80,21 @@ static void initEspNowClient() {
         brightness = message.value;
         dirty = true;
       }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
+      }
       break;
     default:
       return;
     }
   });
+}
+
+void reset() {
+  rawU = 0;
+  rawE = 0;
+  brightness = 0;
+  resetting = false;
 }
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
@@ -125,9 +135,15 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
-  const bool watchdogKick = (now - lastFrameMs) >= WATCHDOG_MS;
 
-  if ((dirty && frameDue) || watchdogKick) {
+  if (resetting) {
+    reset();
+    dirty = false;
+    renderGauge(map_u(0), map_e(0));
+    return;
+  }
+
+  if (dirty && frameDue) {
     // Snapshot volatile values once (avoid tearing)
     noInterrupts();
     const uint16_t u = rawU;

@@ -152,6 +152,7 @@ static SaiMessage lastMessage = {
 };
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
+bool resetting = false;
 
 #define DEFAULT_BRIGHTNESS 20
 void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
@@ -161,6 +162,21 @@ void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
     oldValue = newValue;
     Set_Backlight(newValue);
   }
+}
+
+void reset() {
+  lastMessage = {
+    .slipBall = DCS_MID_CODE,
+    .bank = DCS_MID_CODE,
+    .rateOfTurn = DCS_MID_CODE,
+    .manPitchAdj = DCS_MID_CODE,
+    .pitch = DCS_MID_CODE,
+    .attWarningFlag = 65535,
+    .pointerHor = DCS_MID_CODE,
+    .pointerVer = DCS_MID_CODE,
+  };
+  brightness = 0;
+  resetting = false;
 }
 
 static void updateRendering() {
@@ -322,6 +338,9 @@ static void initEspNowClient() {
         brightness = message.value;
         hasNewMessage = true;
       }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
+      }
     }
   });
 }
@@ -430,10 +449,15 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
-    lastUpdatedAt = now;
+  if (resetting) {
+    reset();
     updateRendering();
+  } else {
+    if (now - lastUpdatedAt > 40 && hasNewMessage) {
+      hasNewMessage = false;
+      lastUpdatedAt = now;
+      updateRendering();
+    }
   }
 
   static uint32_t lastLvglTimerHandlerAt = 0;

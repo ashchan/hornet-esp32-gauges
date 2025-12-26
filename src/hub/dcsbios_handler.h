@@ -6,6 +6,7 @@
 #include <DcsBios.h>
 #include "message.h"
 
+static MissionType missionType = MissionType::Other;
 static AltimeterMessage altimeter{};
 static RadarAltimeterMessage radarAltimeter{};
 static IfeiMessage ifei{};
@@ -26,9 +27,7 @@ uint8_t parseU8(const char *s);
 
 #pragma region DCS Common Data
 void onAcftNameBufferChange(char* newValue) {
-  if (strcmp(newValue, "FA-18C_hornet") == 0) {
-  } else {
-  }
+  missionType = strcmp(newValue, "FA-18C_hornet") == 0 ? MissionType::Hornet : MissionType::Other;
 }
 DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
 

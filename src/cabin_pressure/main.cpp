@@ -30,11 +30,19 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 }
 
 bool hasNewMessage = false;
+bool resetting = false;
 IntegerMessage lastMessage = {};
 uint16_t brightness = 0;
+
 void updateRendering() {
   lv_img_set_angle(imgNeedle, map(lastMessage.value, 0, 65535, -1800, 1160));
   setBrightness(brightness);
+}
+
+void reset() {
+  lastMessage.value = 0;
+  brightness = 0;
+  resetting = false;
 }
 
 static void initEspNowClient() {
@@ -67,6 +75,9 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         hasNewMessage = true;
+      }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
       }
       break;
     default:
@@ -137,10 +148,15 @@ void loop() {
   lv_tick_inc(dt);
 
   static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
-    lastUpdatedAt = now;
+  if (resetting) {
+    reset();
     updateRendering();
+  } else {
+    if (now - lastUpdatedAt > 40 && hasNewMessage) {
+      hasNewMessage = false;
+      lastUpdatedAt = now;
+      updateRendering();
+    }
   }
 
   lv_timer_handler();     // Refresh LVGL

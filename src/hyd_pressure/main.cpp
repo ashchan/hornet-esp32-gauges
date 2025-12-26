@@ -36,17 +36,22 @@ static volatile uint16_t raw1 = 0;      // left hyd (0x750e)
 static volatile uint16_t raw2 = 0;      // right hyd (0x7510)
 static volatile uint16_t brightness = 0;
 static volatile bool dirty = true;
-static volatile uint32_t lastDcsMs = 0;
+static volatile bool resetting = true;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
 static const uint32_t FRAME_INTERVAL_MS = 33;  // ~30 FPS
-static const uint32_t WATCHDOG_MS       = 500; // periodic refresh while active
 
 // ── Mapping: DCS raw -> gauge angle (degrees) ──────────────────────────────────
 // Original mapping preserved: 0..65535 -> -280..40
 static inline int16_t map_hyd(uint16_t v) {
   return map(v, 0, 65535, -280, 40);
+}
+
+void reset() {
+  resetting = false;
+  dirty = false;
+  brightness = 0;
 }
 
 // ── Forward decls ──────────────────────────────────────────────────────────────
@@ -132,10 +137,17 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   const bool frameDue   = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
-  const bool dcsActive  = (now - lastDcsMs) < 2000;
-  const bool watchdog   = dcsActive && ((now - lastFrameMs) >= WATCHDOG_MS);
 
-  if ((dirty && frameDue) || watchdog) {
+  if (resetting) {
+    noInterrupts();
+    reset();
+    interrupts();
+    renderGauge(0, 0);
+    setBrightness(brightness);
+    return;
+  }
+
+  if (dirty && frameDue) {
     // snapshot once to avoid tearing
     noInterrupts();
     const uint16_t r1 = raw1;

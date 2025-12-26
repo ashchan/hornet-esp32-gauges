@@ -41,10 +41,19 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 uint16_t brightness = 0;
 uint16_t airspeed = 65530 / 2;
-bool dirty = true;
+bool dirty = false;
+bool resetting = true;
+
 void updateRendering() {
   lv_img_set_angle(imgNeedle, map(airspeed, 0, 65530, 0, 3500));
   setBrightness(brightness);
+}
+
+void reset() {
+  brightness = 0;
+  airspeed = 65530 / 2;
+  resetting = false;
+  updateRendering();
 }
 
 static void initEspNowClient() {
@@ -72,6 +81,9 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         dirty = true;
+      }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
       }
     }
   });
@@ -136,11 +148,15 @@ void loop() {
 
   lv_tick_inc(dt);
 
-  static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && dirty) {
-    dirty = false;
-    lastUpdatedAt = now;
-    updateRendering();
+  if (resetting) {
+    reset();
+  } else {
+    static uint32_t lastUpdatedAt = 0;
+    if (now - lastUpdatedAt > 40 && dirty) {
+      dirty = false;
+      lastUpdatedAt = now;
+      updateRendering();
+    }
   }
 
   lv_timer_handler();     // Refresh LVGL

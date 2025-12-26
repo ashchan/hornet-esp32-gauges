@@ -134,6 +134,11 @@ struct __attribute__((packed)) SaiMessage {
 };
 #pragma pack(pop)
 
+enum class MissionType : uint8_t {
+  Hornet,
+  Other, // Other aircraft types or mission end
+};
+
 enum class ValueName : uint8_t {
   Airspeed,
   VerticalVelocityIndicator,
@@ -145,6 +150,7 @@ enum class ValueName : uint8_t {
   HydraulicPressureRight,
   InstrumentLighting,
   ConsoleLighting,
+  MissionChanged,
 };
 
 static bool isEqualAltimeterMessage(const AltimeterMessage& a, const AltimeterMessage& b) {

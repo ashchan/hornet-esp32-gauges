@@ -29,11 +29,11 @@ TFT_eSprite sprNeedle(&tft);
 
 static volatile bool dirtyBrake = true;
 static volatile uint16_t brightness = 0;
+static volatile bool resetting = false;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
 static const uint32_t FRAME_INTERVAL_MS = 33;   // ~30 FPS
-static const uint32_t WATCHDOG_MS       = 500;  // refresh safety timer
 
 // ── Mapping: DCS raw → gauge angle ─────────────────────────────────────────────
 static inline int16_t mapBrakeValue(uint16_t v) {
@@ -44,6 +44,13 @@ static inline int16_t mapBrakeValue(uint16_t v) {
 void renderGauge(int16_t angleDeg);
 void bitTest();
 IntegerMessage lastMessage = {};
+
+void reset() {
+  resetting = false;
+  dirtyBrake = false;
+  brightness = 0;
+  lastMessage = {};
+}
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -75,6 +82,9 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         dirtyBrake = true;
+      }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
       }
       break;
     default:
@@ -114,9 +124,15 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
-  const bool watchdogKick = (now - lastFrameMs) >= WATCHDOG_MS;
 
-  if ((dirtyBrake && frameDue) || watchdogKick) {
+  if (resetting) {
+    noInterrupts();
+    reset();
+    interrupts();
+
+    renderGauge(mapBrakeValue(lastMessage.value));
+    setBrightness(brightness);
+  } else if (dirtyBrake && frameDue) {
     noInterrupts();
     dirtyBrake = false;
     interrupts();

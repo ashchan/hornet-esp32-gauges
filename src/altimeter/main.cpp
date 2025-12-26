@@ -109,6 +109,7 @@ void onStbyPressSet2Change(unsigned int newValue) {
 static AltimeterMessage lastMessage = {};
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
+bool resetting = false;
 
 void updateRendering() {
   onStbyAlt10000FtCntChange(lastMessage.alt10000FtCnt);
@@ -118,6 +119,19 @@ void updateRendering() {
   onStbyPressSet1Change(lastMessage.pressSet1);
   onStbyPressSet2Change(lastMessage.pressSet2);
   setBrightness(brightness);
+}
+
+void reset() {
+  resetting = false;
+  brightness = 0;
+  onStbyAlt10000FtCntChange(0);
+  onStbyAlt1000FtCntChange(0);
+  onStbyAlt100FtPtrChange(0);
+  updateBaroDrum(img_baroThousands, 2);
+  updateBaroDrum(img_baroHundreds, 9);
+  updateBaroDrum(img_baroTens, 9);
+  updateBaroDrum(img_baroOnes, 2);
+  setBrightness();
 }
 
 static void initEspNowClient() {
@@ -150,6 +164,9 @@ static void initEspNowClient() {
       if (integerMessage.name == ValueName::InstrumentLighting) {
         brightness = integerMessage.value;
         hasNewMessage = true;
+      }
+      if (integerMessage.name == ValueName::MissionChanged) {
+        resetting = true;
       }
       break;
     default:
@@ -292,11 +309,15 @@ void loop() {
 
   lv_tick_inc(dt);
 
-  static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
-    lastUpdatedAt = now;
-    updateRendering();
+  if (resetting) {
+    reset();
+  } else {
+    static uint32_t lastUpdatedAt = 0;
+    if (now - lastUpdatedAt > 40 && hasNewMessage) {
+      hasNewMessage = false;
+      lastUpdatedAt = now;
+      updateRendering();
+    }
   }
 
   lv_timer_handler();     // Refresh LVGL

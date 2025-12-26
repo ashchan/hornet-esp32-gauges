@@ -44,6 +44,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 static RadarAltimeterMessage lastMessage = {};
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
+bool resetting = false;
 
 void updateRendering() {
   lv_img_set_angle(img_radarAltNeedle, map(lastMessage.altPtr, 3450, 65530, 0, 3200));
@@ -79,6 +80,12 @@ void updateRendering() {
   setBrightness(brightness);
 }
 
+void reset() {
+  lastMessage = {};
+  brightness = 0;
+  resetting = false;
+}
+
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
   esp_wifi_set_channel(ESP_CHANNEL, WIFI_SECOND_CHAN_NONE);
@@ -104,6 +111,9 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         hasNewMessage = true;
+      }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
       }
     }
   });
@@ -199,11 +209,16 @@ void loop() {
 
   lv_tick_inc(dt);
 
-  static uint32_t lastUpdatedAt = 0;
-  if (now - lastUpdatedAt > 40 && hasNewMessage) {
-    hasNewMessage = false;
-    lastUpdatedAt = now;
+  if (resetting) {
+    reset();
     updateRendering();
+  } else {
+    static uint32_t lastUpdatedAt = 0;
+    if (now - lastUpdatedAt > 40 && hasNewMessage) {
+      hasNewMessage = false;
+      lastUpdatedAt = now;
+      updateRendering();
+    }
   }
 
   lv_timer_handler();     // Refresh LVGL

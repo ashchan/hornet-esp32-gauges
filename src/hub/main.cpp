@@ -52,6 +52,7 @@ void setup() {
   delay(300);
 }
 
+static MissionType previousMissionType = MissionType::Other;
 static IfeiMessage previousIfei{};
 static AltimeterMessage previousAltimeter{};
 static RadarAltimeterMessage previousRadarAltimeter{};
@@ -85,6 +86,11 @@ void loop() {
   }
 
   if (now - lastSendAt > messageInterval) {
+    if (missionType != previousMissionType) {
+      previousMissionType = missionType;
+      sendIntegerMessage(ValueName::MissionChanged, static_cast<uint8_t>(missionType));
+    }
+
     if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
       previousAltimeter = altimeter;
       previousAltimeter.header.ms = millis();
