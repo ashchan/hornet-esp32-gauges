@@ -75,8 +75,8 @@ static constexpr int   GLOBE_ANGLE_OFFSET_TENTHS = 1800;
 
 // ----------------- LVGL state -----------------
 static lv_disp_draw_buf_t draw_buf;
-#define BUF_LINES 64
-static lv_color_t buf1[DISP_WIDTH * BUF_LINES];
+static lv_color_t *fb0 = nullptr;
+static lv_color_t *fb1 = nullptr;
 
 static lv_obj_t *scr                = nullptr;
 static lv_obj_t *bug_img            = nullptr;
@@ -106,8 +106,13 @@ static inline int map_u16_range(uint16_t v, uint16_t in_min, uint16_t in_max, in
   return (int)(out_min + (num / den));
 }
 
+extern SemaphoreHandle_t g_vsync_sem;
+extern esp_lcd_panel_handle_t panel_handle;
 static void my_disp_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
-  LCD_addWindow((uint16_t)area->x1, (uint16_t)area->y1, (uint16_t)area->x2, (uint16_t)area->y2, (uint8_t*)color_p);
+  if (g_vsync_sem) {
+    xSemaphoreTake(g_vsync_sem, pdMS_TO_TICKS(50));
+  }
+  esp_lcd_panel_draw_bitmap(panel_handle, 0, 0, DISP_WIDTH, DISP_HEIGHT, color_p);
   lv_disp_flush_ready(drv);
 }
 
@@ -325,10 +330,11 @@ void setup() {
 
   LCD_Init();
   Backlight_Init();
-  setBrightness();
 
   lv_init();
-  lv_disp_draw_buf_init(&draw_buf, buf1, nullptr, DISP_WIDTH * BUF_LINES);
+
+  esp_err_t err = esp_lcd_rgb_panel_get_frame_buffer(panel_handle, 2, (void**)&fb0, (void**)&fb1);
+  lv_disp_draw_buf_init(&draw_buf, fb0, fb1, DISP_WIDTH * DISP_HEIGHT);
 
   static lv_disp_drv_t disp_drv;
   lv_disp_drv_init(&disp_drv);
@@ -336,7 +342,8 @@ void setup() {
   disp_drv.ver_res      = DISP_HEIGHT;
   disp_drv.draw_buf     = &draw_buf;
   disp_drv.flush_cb     = my_disp_flush;
-  disp_drv.full_refresh = 0;
+  disp_drv.full_refresh = 1;
+  disp_drv.direct_mode  = 1;
   lv_disp_drv_register(&disp_drv);
 
   scr = lv_obj_create(nullptr);

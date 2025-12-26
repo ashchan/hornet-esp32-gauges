@@ -1,4 +1,7 @@
 #include "Display_ST7701.h"
+#include "freertos/semphr.h"
+
+SemaphoreHandle_t g_vsync_sem = nullptr;
 
 spi_device_handle_t SPI_handle = NULL;
 esp_lcd_panel_handle_t panel_handle = NULL;
@@ -379,13 +382,22 @@ void ST7701_Init()
   // esp_lcd_rgb_panel_register_event_callbacks(panel_handle, &cbs, &disp_drv);
   esp_lcd_panel_reset(panel_handle);
   esp_lcd_panel_init(panel_handle);
+  g_vsync_sem = xSemaphoreCreateBinary();
+
+  esp_lcd_rgb_panel_event_callbacks_t cbs = {};
+  cbs.on_vsync = on_vsync_event;
+  ESP_ERROR_CHECK(esp_lcd_rgb_panel_register_event_callbacks(panel_handle, &cbs, nullptr));
 }
 
-bool example_on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data)
+static bool on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data)
 {
-  BaseType_t high_task_awoken = pdFALSE;
-  return high_task_awoken == pdTRUE;
+  BaseType_t hp = pdFALSE;
+  if (g_vsync_sem) {
+    xSemaphoreGiveFromISR(g_vsync_sem, &hp);
+  }
+  return hp == pdTRUE;
 }
+
 void LCD_Init() {
   ST7701_Reset();
   ST7701_Init();
@@ -401,7 +413,6 @@ void LCD_addWindow(uint16_t Xstart, uint16_t Ystart, uint16_t Xend, uint16_t Yen
 
   esp_lcd_panel_draw_bitmap(panel_handle, Xstart, Ystart, Xend, Yend, color);                     // x_end End index on x-axis (x_end not included)
 }
-
 
 // backlight
 uint8_t LCD_Backlight = 50;

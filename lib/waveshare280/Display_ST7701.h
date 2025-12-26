@@ -3,6 +3,7 @@
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
+#include "freertos/semphr.h"
 #include "driver/spi_master.h"
 #include "driver/gpio.h"
 #include "esp_heap_caps.h"
@@ -17,6 +18,7 @@
 
 #include "TCA9554PWR.h"
 
+extern SemaphoreHandle_t g_vsync_sem;
 
 #define LCD_CLK_PIN   2
 #define LCD_MOSI_PIN  1
@@ -80,7 +82,7 @@ extern uint8_t LCD_Backlight;
 
 
 extern esp_lcd_panel_handle_t panel_handle;
-bool example_on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data);
+static bool on_vsync_event(esp_lcd_panel_handle_t panel, const esp_lcd_rgb_panel_event_data_t *event_data, void *user_data);
 void ST7701_Init();
 
 void LCD_Init();
