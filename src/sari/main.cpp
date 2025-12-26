@@ -159,15 +159,15 @@ void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
 
 static void updateRendering() {
   // 0..65535 → 0..3600 (tenths°), then rotate 180° for panel orientation
-  static int16_t  ui_bank_x10  = 0;
+  static int16_t ui_bank_x10  = 0;
   int16_t bank = (int16_t)(((int32_t)lastMessage.bank * 3600) / 65535 + 1800) % 3600;
-  if (bank != ui_bank_x10) {
+  if (abs(bank - ui_bank_x10) >= 3) { // Only redraw if bank changes by 0.3
     lv_img_set_angle(bank_img, bank);
     lv_img_set_angle(globe_img, bank);
   }
 
   // 0..65535 → -900..+900 tenths deg
-  static int16_t  ui_pitch_x10 = 0;
+  static int16_t ui_pitch_x10 = 0;
   int16_t pitch = (int16_t)map((int)lastMessage.pitch, 0, 65535, -900, 900);
   if (pitch != ui_pitch_x10 || bank != ui_bank_x10) {
     // Globe pitch translation (roll-compensated)
@@ -177,7 +177,7 @@ static void updateRendering() {
   ui_pitch_x10 = pitch;
 
   // Rate of Turn lateral motion
-  static uint16_t ui_rot_raw   = 0;
+  static uint16_t ui_rot_raw = 0;
   {
     if (lastMessage.rateOfTurn != ui_rot_raw) {
       ui_rot_raw = lastMessage.rateOfTurn;
@@ -189,7 +189,7 @@ static void updateRendering() {
   }
 
   // Slip Ball (x + slight y rise when off-center)
-  static uint16_t ui_slip_raw  = 0;
+  static uint16_t ui_slip_raw = 0;
   {
     if (lastMessage.slipBall != ui_slip_raw) {
       ui_slip_raw = lastMessage.slipBall;
@@ -203,7 +203,7 @@ static void updateRendering() {
   }
 
   // Bug (manual pitch adjust)
-  static uint16_t ui_bug_raw   = 0;
+  static uint16_t ui_bug_raw = 0;
   {
     if (lastMessage.manPitchAdj != ui_bug_raw) {
       ui_bug_raw = lastMessage.manPitchAdj;
@@ -257,7 +257,7 @@ static void updateRendering() {
   // ------------------------------------------------------
 
   // SARICaged animation (DCS 0 -> -900, 65535 -> 0), but init hard-set
-  static uint16_t ui_cage_raw  = 0;
+  static uint16_t ui_cage_raw = 0;
   {
     if (lastMessage.attWarningFlag != ui_cage_raw) {
       ui_cage_raw = lastMessage.attWarningFlag;
@@ -418,7 +418,6 @@ void loop() {
   const uint32_t now = millis();
   uint32_t dt = now - lastTick;
   lastTick = now;
-
   lv_tick_inc(dt);
 
   static uint32_t lastUpdatedAt = 0;
@@ -428,5 +427,9 @@ void loop() {
     updateRendering();
   }
 
-  lv_timer_handler();
+  static uint32_t last_lv = 0;
+  if (millis() - last_lv >= 5) {
+    last_lv = millis();
+    lv_timer_handler();
+  }
 }
