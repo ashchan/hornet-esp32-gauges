@@ -93,26 +93,6 @@ static lv_obj_t *sariCaged_img         = nullptr;
 static int globe_w = 0, globe_h = 0;
 static int globe_center_x = 0, globe_base_y = 0;
 
-// ----------------- DCS -> UI Mailboxes (ISR writes; loop reads) -----------------
-static volatile int16_t  mb_pitch_x10   = 0;             // tenths of degrees
-static volatile int16_t  mb_bank_x10    = 0;             // tenths of degrees (0..3600, oriented)
-static volatile uint16_t mb_rot_raw     = DCS_MID_CODE;
-static volatile uint16_t mb_slip_raw    = DCS_MID_CODE;
-static volatile uint16_t mb_bug_raw     = DCS_MID_CODE;  // manual pitch bug
-static volatile uint16_t mb_cage_raw    = 0;             // 0..65535 for SARICaged
-static volatile uint16_t mb_pointerHorRaw  = 0;          // raw DCS (32767..65535 active)
-static volatile uint16_t mb_pointerVerRaw  = 0;          // raw DCS (0..32767 active)
-
-// UI copies (non-volatile)
-static int16_t  ui_pitch_x10 = 0;
-static int16_t  ui_bank_x10  = 0;
-static uint16_t ui_rot_raw   = DCS_MID_CODE;
-static uint16_t ui_slip_raw  = DCS_MID_CODE;
-static uint16_t ui_bug_raw   = DCS_MID_CODE;
-static uint16_t ui_cage_raw  = 0;
-static uint16_t ui_pointerHorRaw = 0;
-static uint16_t ui_pointerVerRaw = 0;
-
 // ----------------- Utils -----------------
 static inline int clampInt(int v, int lo, int hi) { return (v < lo) ? lo : (v > hi) ? hi : v; }
 
@@ -127,15 +107,13 @@ static inline int map_u16_range(uint16_t v, uint16_t in_min, uint16_t in_max, in
 }
 
 static void my_disp_flush(lv_disp_drv_t *drv, const lv_area_t *area, lv_color_t *color_p) {
-  LCD_addWindow((uint16_t)area->x1, (uint16_t)area->y1,
-                (uint16_t)area->x2, (uint16_t)area->y2, (uint8_t*)color_p);
+  LCD_addWindow((uint16_t)area->x1, (uint16_t)area->y1, (uint16_t)area->x2, (uint16_t)area->y2, (uint8_t*)color_p);
   lv_disp_flush_ready(drv);
 }
 
 // ----------------- Core: roll-compensated pitch -----------------
 static void update_globe_position(int16_t pitch_x10, int16_t bank_x10) {
-  const int pitch_pixels = clampInt(PITCH_DIR * (pitch_x10 * PITCH_PX_PER_DEG) / 10,
-                                    -PITCH_MAX_PX, PITCH_MAX_PX);
+  const int pitch_pixels = clampInt(PITCH_DIR * (pitch_x10 * PITCH_PX_PER_DEG) / 10, -PITCH_MAX_PX, PITCH_MAX_PX);
 
   const int pivot_x = (globe_w / 2) + GLOBE_CAL_X;
   const int pivot_y = (globe_h / 2) + GLOBE_CAL_Y;
@@ -150,53 +128,23 @@ static void update_globe_position(int16_t pitch_x10, int16_t bank_x10) {
   lv_obj_set_pos(globe_img, base_img_x + dx, base_img_y + dy);
 }
 
-// ----------------- DCS-BIOS callbacks (ISR-safe: NO LVGL HERE) -----------------
-void onSaiSlipBallChange(unsigned int v) {
-  mb_slip_raw = (uint16_t)v;
-}
-
-void onSaiBankChange(unsigned int v) {
-  // 0..65535 → 0..3600 (tenths°), then rotate 180° for panel orientation
-  int32_t t = ((int32_t)v * 3600) / 65535;
-  t = (t + 1800) % 3600;
-  mb_bank_x10 = (int16_t)t;
-}
-
-void onSaiRateOfTurnChange(unsigned int v) {
-  mb_rot_raw = (uint16_t)v;
-}
-
-void onSaiManPitchAdjChange(unsigned int v) {
-  mb_bug_raw = (uint16_t)v;
-}
-
-void onSaiPitchChange(unsigned int v) {
-  // 0..65535 → -900..+900 tenths deg
-  mb_pitch_x10 = (int16_t)map((int)v, 0, 65535, -900, 900);
-}
-
-// SARICaged (store raw, mapping/anim in UI thread)
-void onSaiAttWarningFlagChange(unsigned int v) {
-  mb_cage_raw = (uint16_t)v;
-}
-
-// Horizontal pointer RAW (active range 32767..65535)
-void onSaiPointerHorChange(unsigned int v) {
-  mb_pointerHorRaw = (uint16_t)v;
-}
-
-// Vertical pointer RAW (active range 0..32767)
-void onSaiPointerVerChange(unsigned int v) {
-  mb_pointerVerRaw = (uint16_t)v;
-}
-
-static SaiMessage lastMessage = {};
+static portMUX_TYPE msgMux = portMUX_INITIALIZER_UNLOCKED;
+static SaiMessage lastMessage = {
+  .slipBall = DCS_MID_CODE,
+  .bank = DCS_MID_CODE,
+  .rateOfTurn = DCS_MID_CODE,
+  .manPitchAdj = DCS_MID_CODE,
+  .pitch = DCS_MID_CODE,
+  .attWarningFlag = 65535,
+  .pointerHor = DCS_MID_CODE,
+  .pointerVer = DCS_MID_CODE,
+};
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
 
-#define DEFAULT_BRIGHTNESS 10
+#define DEFAULT_BRIGHTNESS 20
 void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
-  static uint16_t oldValue = DEFAULT_BRIGHTNESS;
+  static uint16_t oldValue = 0;
   uint16_t newValue = map(value, 0, 65535, DEFAULT_BRIGHTNESS, 80);
   if (oldValue != newValue) {
     oldValue = newValue;
@@ -205,71 +153,62 @@ void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
 }
 
 static void updateRendering() {
-  onSaiPitchChange(lastMessage.pitch);
-  onSaiBankChange(lastMessage.bank);
-  onSaiSlipBallChange(lastMessage.slipBall);
-  onSaiRateOfTurnChange(lastMessage.rateOfTurn);
-  onSaiManPitchAdjChange(lastMessage.manPitchAdj);
-  onSaiAttWarningFlagChange(lastMessage.attWarningFlag);
-  onSaiPointerHorChange(lastMessage.pointerHor);
-  onSaiPointerVerChange(lastMessage.pointerVer);
+  // 0..65535 → 0..3600 (tenths°), then rotate 180° for panel orientation
+  static int16_t  ui_bank_x10  = 0;
+  int16_t bank = (int16_t)(((int32_t)lastMessage.bank * 3600) / 65535 + 1800) % 3600;
+  if (bank != ui_bank_x10) {
+    lv_img_set_angle(bank_img, bank);
+    lv_img_set_angle(globe_img, bank);
+  }
 
-  noInterrupts();
-  int16_t  pitch_x10  = mb_pitch_x10;
-  int16_t  bank_x10   = mb_bank_x10;
-  uint16_t rot_raw    = mb_rot_raw;
-  uint16_t slip_raw   = mb_slip_raw;
-  uint16_t bug_raw    = mb_bug_raw;
-  uint16_t cage_raw   = mb_cage_raw;
-  uint16_t pHorRaw    = mb_pointerHorRaw;  // 32767..65535 active
-  uint16_t pVerRaw    = mb_pointerVerRaw;  // 0..32767 active
-  interrupts();
-
-  // Store copies
-  ui_pitch_x10  = pitch_x10;
-  ui_bank_x10   = bank_x10;
-  ui_rot_raw    = rot_raw;
-  ui_slip_raw   = slip_raw;
-  ui_bug_raw    = bug_raw;
-  ui_cage_raw   = cage_raw;
-  ui_pointerHorRaw = pHorRaw;
-  ui_pointerVerRaw = pVerRaw;
-
-  // ---- Apply to LVGL (safe context) ----
-
-  // Bank rotation: bank tape follows DCS; globe is flipped 180° from it
-  lv_img_set_angle(bank_img, ui_bank_x10);
-  lv_img_set_angle(globe_img, ui_bank_x10);
-
-  // Globe pitch translation (roll-compensated)
-  update_globe_position(ui_pitch_x10, ui_bank_x10);
+  // 0..65535 → -900..+900 tenths deg
+  static int16_t  ui_pitch_x10 = 0;
+  int16_t pitch = (int16_t)map((int)lastMessage.pitch, 0, 65535, -900, 900);
+  if (pitch != ui_pitch_x10 || bank != ui_bank_x10) {
+    // Globe pitch translation (roll-compensated)
+    update_globe_position(ui_pitch_x10, bank);
+  }
+  ui_bank_x10 = bank;
+  ui_pitch_x10 = pitch;
 
   // Rate of Turn lateral motion
+  static uint16_t ui_rot_raw   = 0;
   {
-    long delta = (long)ui_rot_raw - DCS_MID_CODE;
-    long x = (DCS_HALF_SPAN != 0) ? (delta * ROT_MAX_X_PX) / DCS_HALF_SPAN : 0;
-    x = clampInt((int)x, -ROT_MAX_X_PX, ROT_MAX_X_PX);
-    lv_obj_align(rateOfTurn_img, LV_ALIGN_CENTER, (int)x, ROT_BASE_Y);
+    if (lastMessage.rateOfTurn != ui_rot_raw) {
+      ui_rot_raw = lastMessage.rateOfTurn;
+      long delta = (long)ui_rot_raw - DCS_MID_CODE;
+      long x = (DCS_HALF_SPAN != 0) ? (delta * ROT_MAX_X_PX) / DCS_HALF_SPAN : 0;
+      x = clampInt((int)x, -ROT_MAX_X_PX, ROT_MAX_X_PX);
+      lv_obj_align(rateOfTurn_img, LV_ALIGN_CENTER, (int)x, ROT_BASE_Y);
+    }
   }
 
   // Slip Ball (x + slight y rise when off-center)
+  static uint16_t ui_slip_raw  = 0;
   {
-    long delta = (long)ui_slip_raw - DCS_MID_CODE;
-    long x = (DCS_HALF_SPAN != 0) ? (delta * SLIP_MAX_X_PX) / DCS_HALF_SPAN : 0;
-    x = clampInt((int)x, -SLIP_MAX_X_PX, SLIP_MAX_X_PX);
-    float ratio = (float)abs((int)x) / (float)SLIP_MAX_X_PX;
-    int y = SLIP_BASE_Y - (int)(ratio * SLIP_MAX_Y_UP);
-    lv_obj_align(slipBall_img, LV_ALIGN_CENTER, (int)x, y);
+    if (lastMessage.slipBall != ui_slip_raw) {
+      ui_slip_raw = lastMessage.slipBall;
+      long delta = (long)ui_slip_raw - DCS_MID_CODE;
+      long x = (DCS_HALF_SPAN != 0) ? (delta * SLIP_MAX_X_PX) / DCS_HALF_SPAN : 0;
+      x = clampInt((int)x, -SLIP_MAX_X_PX, SLIP_MAX_X_PX);
+      float ratio = (float)abs((int)x) / (float)SLIP_MAX_X_PX;
+      int y = SLIP_BASE_Y - (int)(ratio * SLIP_MAX_Y_UP);
+      lv_obj_align(slipBall_img, LV_ALIGN_CENTER, (int)x, y);
+    }
   }
 
   // Bug (manual pitch adjust)
+  static uint16_t ui_bug_raw   = 0;
   {
-    static constexpr int MAX_PX = 35;
-    long delta = (long)ui_bug_raw - DCS_MID_CODE;
-    long y = (DCS_HALF_SPAN != 0) ? (delta * MAX_PX) / DCS_HALF_SPAN : 0;
-    y = -y;
-    int y_out = clampInt((int)y, -MAX_PX, MAX_PX) + BUG_Y_OFFSET;
-    lv_obj_align(bug_img, LV_ALIGN_CENTER, 0, y_out);
+    if (lastMessage.manPitchAdj != ui_bug_raw) {
+      ui_bug_raw = lastMessage.manPitchAdj;
+      static constexpr int MAX_PX = 35;
+      long delta = (long)ui_bug_raw - DCS_MID_CODE;
+      long y = (DCS_HALF_SPAN != 0) ? (delta * MAX_PX) / DCS_HALF_SPAN : 0;
+      y = -y;
+      int y_out = clampInt((int)y, -MAX_PX, MAX_PX) + BUG_Y_OFFSET;
+      lv_obj_align(bug_img, LV_ALIGN_CENTER, 0, y_out);
+    }
   }
 
   // ----------------- POINTER LOGIC with split ranges -----------------
@@ -277,17 +216,22 @@ static void updateRendering() {
   // 1) HorizontalPointer: active only when raw in [32767..65535]
   //    Map to UP travel [0..HP_MAX_UP_PX] (screen Y decreases upward)
   {
+    static uint16_t ui_pointerHorRaw = 0;
     // Clamp to input domain to be safe
     const uint16_t IN_MIN = 32767u;
     const uint16_t IN_MAX = 65535u;
-    int up_px = map_u16_range(ui_pointerHorRaw, IN_MIN, IN_MAX, 0, HP_MAX_UP_PX);
-    int y = HP_Y_OFFSET - up_px;  // up is negative Y
-    lv_obj_align(horizontalPointer_img, LV_ALIGN_CENTER, HP_X_OFFSET, y);
+    if (lastMessage.pointerHor != ui_pointerHorRaw) {
+      ui_pointerHorRaw = lastMessage.pointerHor;
+      int up_px = map_u16_range(ui_pointerHorRaw, IN_MIN, IN_MAX, 0, HP_MAX_UP_PX);
+      int y = HP_Y_OFFSET - up_px;  // up is negative Y
+      lv_obj_align(horizontalPointer_img, LV_ALIGN_CENTER, HP_X_OFFSET, y);
+    }
   }
 
   // 2) VerticalPointer: active only when raw in [0..32767]
   //    Interpolate center X from base_center_x (at 0) to target_center_x (at 32767)
   {
+    static uint16_t ui_pointerVerRaw = 0;
     const uint16_t IN_MIN = 0u;
     const uint16_t IN_MAX = 32767u;
 
@@ -295,38 +239,44 @@ static void updateRendering() {
     const int vp_w = VerticalPointer.header.w;
     const int target_center_x = VP_OFF_LEFT_EDGE_PX + (vp_w / 2);
 
-    // Compute interpolated center X
-    int center_x = base_center_x + map_u16_range(ui_pointerVerRaw, IN_MIN, IN_MAX,
-                                                 target_center_x - base_center_x, 0);
+    if (lastMessage.pointerVer != ui_pointerVerRaw) {
+      ui_pointerVerRaw = lastMessage.pointerVer;
+      // Compute interpolated center X
+      int center_x = base_center_x + map_u16_range(ui_pointerVerRaw, IN_MIN, IN_MAX, target_center_x - base_center_x, 0);
 
-    // Convert back to LVGL align offset (relative to screen center)
-    int dx = center_x - (DISP_WIDTH / 2);
-    lv_obj_align(verticalPointer_img, LV_ALIGN_CENTER, dx, VP_Y_OFFSET);
+      // Convert back to LVGL align offset (relative to screen center)
+      int dx = center_x - (DISP_WIDTH / 2);
+      lv_obj_align(verticalPointer_img, LV_ALIGN_CENTER, dx, VP_Y_OFFSET);
+    }
   }
   // ------------------------------------------------------
 
   // SARICaged animation (DCS 0 -> -900, 65535 -> 0), but init hard-set
+  static uint16_t ui_cage_raw  = 0;
   {
-    static int16_t last_caged_angle = 0;  // match setup()
-    static bool cage_inited = false;
+    if (lastMessage.attWarningFlag != ui_cage_raw) {
+      ui_cage_raw = lastMessage.attWarningFlag;
+      static int16_t last_caged_angle = 0;  // match setup()
+      static bool cage_inited = false;
 
-    // Correct mapping: 0..65535  ->  -900..0 (tenths of degrees)
-    int16_t target = (int16_t)(-900 + ((int32_t)ui_cage_raw * 900) / 65535);
+      // Correct mapping: 0..65535  ->  -900..0 (tenths of degrees)
+      int16_t target = (int16_t)(-900 + ((int32_t)ui_cage_raw * 900) / 65535);
 
-    if (!cage_inited) {
-      lv_img_set_angle(sariCaged_img, target);
-      last_caged_angle = target;
-      cage_inited = true;
-    } else if (abs(target - last_caged_angle) >= 5) {
-      lv_anim_del(sariCaged_img, (lv_anim_exec_xcb_t)lv_img_set_angle);
-      lv_anim_t a; lv_anim_init(&a);
-      lv_anim_set_var(&a, sariCaged_img);
-      lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
-      lv_anim_set_values(&a, last_caged_angle, target);
-      lv_anim_set_time(&a, 250);
-      lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
-      lv_anim_start(&a);
-      last_caged_angle = target;
+      if (!cage_inited) {
+        lv_img_set_angle(sariCaged_img, target);
+        last_caged_angle = target;
+        cage_inited = true;
+      } else if (abs(target - last_caged_angle) >= 5) {
+        lv_anim_del(sariCaged_img, (lv_anim_exec_xcb_t)lv_img_set_angle);
+        lv_anim_t a; lv_anim_init(&a);
+        lv_anim_set_var(&a, sariCaged_img);
+        lv_anim_set_exec_cb(&a, (lv_anim_exec_xcb_t)lv_img_set_angle);
+        lv_anim_set_values(&a, last_caged_angle, target);
+        lv_anim_set_time(&a, 250);
+        lv_anim_set_path_cb(&a, lv_anim_path_ease_in_out);
+        lv_anim_start(&a);
+        last_caged_angle = target;
+      }
     }
   }
 
@@ -350,7 +300,9 @@ static void initEspNowClient() {
 
     const MessageHeader* hdr = reinterpret_cast<const MessageHeader*>(data);
     if (hdr->category ==  MessageCategory::SAI) {
+      portENTER_CRITICAL_ISR(&msgMux);
       lastMessage = *reinterpret_cast<const SaiMessage *>(data);
+      portEXIT_CRITICAL_ISR(&msgMux);
       hasNewMessage = true;
     }
     if (hdr->category == MessageCategory::Integer) {
@@ -362,7 +314,6 @@ static void initEspNowClient() {
     }
   });
 }
-
 
 // ----------------- Setup / Loop -----------------
 void setup() {
@@ -450,26 +401,6 @@ void setup() {
   lv_img_set_pivot(sariCaged_img, SARICaged.header.w, 0); // top-right
   lv_img_set_angle(sariCaged_img, 0);
 
-  // Seed UI with neutral values and apply once
-  mb_pitch_x10 = 0;
-  mb_bank_x10  = 0;
-  mb_rot_raw   = DCS_MID_CODE;
-  mb_slip_raw  = DCS_MID_CODE;
-  mb_bug_raw   = DCS_MID_CODE;
-  mb_cage_raw  = 0;
-
-  // Start pointers at their inactive ends
-  mb_pointerHorRaw = 32767; // at/below this = no up travel
-  mb_pointerVerRaw = 32767;     // zero left push
-
-  // Force neutral position
-  uint16_t DCS_MID = 32782;
-  onSaiPitchChange(DCS_MID);
-  onSaiBankChange(DCS_MID);
-  onSaiSlipBallChange(DCS_MID);
-  onSaiRateOfTurnChange(DCS_MID);
-  onSaiManPitchAdjChange(DCS_MID);
-  onSaiAttWarningFlagChange(65535);
   updateRendering();
 
   initEspNowClient();
@@ -490,5 +421,5 @@ void loop() {
     updateRendering();
   }
 
-  lv_timer_handler();     // Refresh LVGL
+  lv_timer_handler();
 }
