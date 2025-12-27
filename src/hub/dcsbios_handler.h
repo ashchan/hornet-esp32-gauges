@@ -25,8 +25,25 @@ static uint16_t consoleLighting;
 uint16_t parseU16(const char *s);
 uint8_t parseU8(const char *s);
 
+void reset() {
+  altimeter = AltimeterMessage{};
+  radarAltimeter = RadarAltimeterMessage{};
+  ifei = IfeiMessage{};
+  sai = SaiMessage{};
+  airspeed = 0;
+  vsi = 0;
+  voltU = 0;
+  hydIndBrake = 0;
+  cabinAltIndicator = 0;
+  hydPressL = 0;
+  hydPressR = 0;
+  instrumentLighting = 0;
+  consoleLighting = 0;
+}
+
 #pragma region DCS Common Data
 void onAcftNameBufferChange(char* newValue) {
+  reset();
   missionType = strcmp(newValue, "FA-18C_hornet") == 0 ? MissionType::Hornet : MissionType::Other;
 }
 DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);

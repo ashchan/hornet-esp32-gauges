@@ -68,14 +68,21 @@ static uint16_t previousHydPressR;
 static uint16_t previousInstrumentLighting;
 static uint16_t previousConsoleLighting;
 
+static const uint32_t messageInterval = 33; // 1000 / messageInterval Hz max
+static const uint32_t ifeiMessageInterval = 250;
+static const uint32_t periodicMessageInterval = 5000;
+static uint32_t lastSendAt = 0;
+static uint32_t lastIfeiSendAt = 0;
+static uint32_t lastPeriodicSendAt = 0; // To resend values that seldom change and might be missed (e.g. hyd pressure, battery, hyd indicator brake)
+
 void loop() {
   DcsBios::loop();
 
-  static uint32_t messageInterval = 33; // 1000 / messageInterval Hz max
-  static uint32_t ifeiMessageInterval = 250;
-  static uint32_t lastSendAt = 0;
-  static uint32_t lastIfeiSendAt = 0;
   const uint32_t now = millis();
+
+  if (missionType != previousMissionType) {
+    // Any cleanup?
+  }
 
   // Limit IFEI refresh rate due to its data size and update frequency
   if (now - lastIfeiSendAt > ifeiMessageInterval && !isEqualIfeiMessage(ifei, previousIfei)) {
@@ -85,10 +92,25 @@ void loop() {
     lastIfeiSendAt = now;
   }
 
+  bool periodicSend = previousMissionType == MissionType::Hornet && now - lastPeriodicSendAt > periodicMessageInterval;
+  if (periodicSend) {
+    lastPeriodicSendAt = now;
+  }
+
   if (now - lastSendAt > messageInterval) {
     if (missionType != previousMissionType) {
       previousMissionType = missionType;
       sendIntegerMessage(ValueName::MissionChanged, static_cast<uint8_t>(missionType));
+    }
+
+    if (instrumentLighting != previousInstrumentLighting) {
+      previousInstrumentLighting = instrumentLighting;
+      sendIntegerMessage(ValueName::InstrumentLighting, instrumentLighting);
+    }
+
+    if (consoleLighting != previousConsoleLighting) {
+      previousConsoleLighting = consoleLighting;
+      sendIntegerMessage(ValueName::ConsoleLighting, consoleLighting);
     }
 
     if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
@@ -119,44 +141,34 @@ void loop() {
       sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
     }
 
-    if (voltU != previousVoltU) {
+    if (voltU != previousVoltU || periodicSend) {
       previousVoltU = voltU;
       sendIntegerMessage(ValueName::VoltU, voltU);
     }
 
-    if (voltE != previousVoltE) {
+    if (voltE != previousVoltE || periodicSend) {
       previousVoltE = voltE;
       sendIntegerMessage(ValueName::VoltE, voltE);
     }
 
-    if (hydIndBrake != previousHydIndBrake) {
+    if (hydIndBrake != previousHydIndBrake || periodicSend) {
       previousHydIndBrake = hydIndBrake;
       sendIntegerMessage(ValueName::BrakePressure, hydIndBrake);
     }
 
-    if (cabinAltIndicator != previousCabinAltIndicator) {
+    if (cabinAltIndicator != previousCabinAltIndicator || periodicSend) {
       previousCabinAltIndicator = cabinAltIndicator;
       sendIntegerMessage(ValueName::CabinAltitudeIndicator, cabinAltIndicator);
     }
 
-    if (hydPressL != previousHydPressL) {
+    if (hydPressL != previousHydPressL || periodicSend) {
       previousHydPressL = hydPressL;
       sendIntegerMessage(ValueName::HydraulicPressureLeft, hydPressL);
     }
 
-    if (hydPressR != previousHydPressR) {
+    if (hydPressR != previousHydPressR || periodicSend) {
       previousHydPressR = hydPressR;
       sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
-    }
-
-    if (instrumentLighting != previousInstrumentLighting) {
-      previousInstrumentLighting = instrumentLighting;
-      sendIntegerMessage(ValueName::InstrumentLighting, instrumentLighting);
-    }
-
-    if (consoleLighting != previousConsoleLighting) {
-      previousConsoleLighting = consoleLighting;
-      sendIntegerMessage(ValueName::ConsoleLighting, consoleLighting);
     }
 
     lastSendAt = now;

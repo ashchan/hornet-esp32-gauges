@@ -27,7 +27,6 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite sprBack(&tft);
 TFT_eSprite sprNeedle(&tft);
 
-static volatile bool resetting = false;
 static volatile bool dirtyBrake = false;
 static volatile uint16_t pressure = 0;
 static volatile uint16_t brightness = 0;
@@ -76,9 +75,6 @@ static void initEspNowClient() {
         brightness = message.value;
         dirtyBrake = true;
       }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
-      }
       break;
     default:
       // ignore
@@ -115,14 +111,6 @@ void setup() {
 
 // ── Main loop ──────────────────────────────────────────────────────────────────
 void loop() {
-  if (resetting) {
-    resetting = false;
-    pressure = 0;
-    brightness = 0;
-    dirtyBrake = true;
-    lastFrameMs = 0;
-  }
-
   const uint32_t now = millis();
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
 
