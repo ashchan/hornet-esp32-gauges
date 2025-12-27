@@ -41,7 +41,6 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 uint16_t vvi = 65535 / 2;
 uint16_t brightness = 0;
 bool dirty = true;
-bool resetting = false;
 
 void updateRendering() {
   int16_t angle = map(vvi, 0, 65535, 900, 4500);
@@ -51,13 +50,6 @@ void updateRendering() {
 
   lv_img_set_angle(img_Needle, angle);
   setBrightness(brightness);
-}
-
-void reset() {
-  vvi = 65535 / 2;
-  brightness = 0;
-  resetting = false;
-  updateRendering();
 }
 
 static void initEspNowClient() {
@@ -79,9 +71,6 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         dirty = true;
-      }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
       }
     }
   });
@@ -137,8 +126,6 @@ void setup() {
   // Align so the pivot is at the gauge center
   lv_obj_align(img_Needle, LV_ALIGN_CENTER, 0, 0);
 
-  reset();
-
   initEspNowClient();
 }
 
@@ -150,15 +137,11 @@ void loop() {
 
   lv_tick_inc(dt);
 
-  if (resetting) {
-    reset();
-  } else {
-    static uint32_t lastUpdatedAt = 0;
-    if (now - lastUpdatedAt > 40 && dirty) {
-      dirty = false;
-      lastUpdatedAt = now;
-      updateRendering();
-    }
+  static uint32_t lastUpdatedAt = 0;
+  if (now - lastUpdatedAt > 40 && dirty) {
+    dirty = false;
+    lastUpdatedAt = now;
+    updateRendering();
   }
 
   lv_timer_handler();

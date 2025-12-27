@@ -33,7 +33,6 @@ static volatile uint16_t rawU = 0;
 static volatile uint16_t rawE = 0;
 static volatile bool dirty = false;
 static volatile uint16_t brightness = 0;
-static volatile bool resetting = false;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
@@ -80,21 +79,11 @@ static void initEspNowClient() {
         brightness = message.value;
         dirty = true;
       }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
-      }
       break;
     default:
       return;
     }
   });
-}
-
-void reset() {
-  rawU = 0;
-  rawE = 0;
-  brightness = 0;
-  resetting = false;
 }
 
 // ── Setup ──────────────────────────────────────────────────────────────────────
@@ -135,14 +124,6 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
-
-  if (resetting) {
-    reset();
-    dirty = false;
-    renderGauge(map_u(0), map_e(0));
-    setBrightness(0);
-    return;
-  }
 
   if (dirty && frameDue) {
     // Snapshot volatile values once (avoid tearing)

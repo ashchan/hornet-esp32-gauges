@@ -36,7 +36,6 @@ static volatile uint16_t raw1 = 0;      // left hyd (0x750e)
 static volatile uint16_t raw2 = 0;      // right hyd (0x7510)
 static volatile uint16_t brightness = 0;
 static volatile bool dirty = true;
-static volatile bool resetting = true;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
@@ -46,12 +45,6 @@ static const uint32_t FRAME_INTERVAL_MS = 33;  // ~30 FPS
 // Original mapping preserved: 0..65535 -> -280..40
 static inline int16_t map_hyd(uint16_t v) {
   return map(v, 0, 65535, -280, 40);
-}
-
-void reset() {
-  resetting = false;
-  dirty = false;
-  brightness = 0;
 }
 
 // ── Forward decls ──────────────────────────────────────────────────────────────
@@ -92,9 +85,6 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         dirty = true;
-      }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
       }
       break;
     default:
@@ -141,23 +131,17 @@ void loop() {
   const uint32_t now = millis();
   const bool frameDue   = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
 
-  if (resetting) {
-    reset();
-    renderGauge(0, 0);
-    setBrightness(0);
-    return;
-  }
-
   if (dirty && frameDue) {
     // snapshot once to avoid tearing
     noInterrupts();
     const uint16_t r1 = raw1;
     const uint16_t r2 = raw2;
+    const uint16_t b = brightness;
     dirty = false;
     interrupts();
 
     renderGauge(map_hyd(r1), map_hyd(r2));
-    setBrightness(brightness);
+    setBrightness(b);
     lastFrameMs = now;
   }
 }
