@@ -45,7 +45,6 @@ static RadarAltimeterMessage lastMessage = {};
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
 
-// TODO: fix OFF display
 void updateRendering() {
   lv_img_set_angle(img_radarAltNeedle, map(lastMessage.altPtr, 3450, 65530, 0, 3200));
   lv_img_set_angle(img_radarAltMinHeight, map(lastMessage.minHeightPtr, 1800, 65530, 0, 3200));
