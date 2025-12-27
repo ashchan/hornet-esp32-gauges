@@ -10,6 +10,7 @@
 #include "radarAltBackground.c"
 #include "radarAltNeedle.c"
 #include "radarAltMinHeight.c"
+#include "radarAltNeedleMask.c"
 #include "radarAltOff.c"
 #include "RedLedOff.c"
 #include "GreenLedOff.c"
@@ -28,6 +29,7 @@ static lv_color_t buf2[DISP_WIDTH * 40];
 lv_obj_t *img_radarAltBackground;
 lv_obj_t *img_radarAltNeedle;
 lv_obj_t *img_radarAltMinHeight;
+lv_obj_t *img_radarAltNeedleMask;
 lv_obj_t *img_radarAltOff;
 lv_obj_t *img_RedLed;
 lv_obj_t *img_GreenLed;
@@ -43,7 +45,7 @@ void my_disp_flush(lv_disp_drv_t *disp, const lv_area_t *area, lv_color_t *color
 
 static RadarAltimeterMessage lastMessage = {};
 uint16_t brightness = 0;
-volatile bool hasNewMessage = false;
+volatile bool hasNewMessage = true;
 
 void updateRendering() {
   lv_img_set_angle(img_radarAltNeedle, map(lastMessage.altPtr, 3450, 65530, 0, 3200));
@@ -182,11 +184,13 @@ void setup() {
   lv_img_set_src(img_radarAltNeedle, &radarAltNeedle);
   lv_obj_align(img_radarAltNeedle, LV_ALIGN_CENTER, 0, -48);
 
+  // ===== Radar needle mask =====
+  img_radarAltNeedleMask = lv_img_create(lv_scr_act());
+  lv_img_set_src(img_radarAltNeedleMask, &radarAltNeedleMask);
+  lv_obj_align(img_radarAltNeedleMask, LV_ALIGN_CENTER, 0, 0);
+
   // Set pivot explicitly to hub center
   lv_img_set_pivot(img_radarAltNeedle, 36, 123);
-
-  // Start needle at 0°
-  lv_img_set_angle(img_radarAltNeedle, 0);
 
   initEspNowClient();
 }
