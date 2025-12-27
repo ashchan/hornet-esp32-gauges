@@ -149,7 +149,7 @@ void loop() {
     noInterrupts();
     const uint16_t u = rawU;
     const uint16_t e = rawE;
-    const uint8_t b = brightness;
+    const uint16_t b = brightness;
     dirty = false;
     interrupts();
 

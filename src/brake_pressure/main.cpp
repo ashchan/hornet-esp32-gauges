@@ -27,9 +27,10 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite sprBack(&tft);
 TFT_eSprite sprNeedle(&tft);
 
-static volatile bool dirtyBrake = true;
-static volatile uint16_t brightness = 0;
 static volatile bool resetting = false;
+static volatile bool dirtyBrake = false;
+static volatile uint16_t pressure = 0;
+static volatile uint16_t brightness = 0;
 
 // ── Render scheduler ───────────────────────────────────────────────────────────
 static uint32_t lastFrameMs = 0;
@@ -43,13 +44,6 @@ static inline int16_t mapBrakeValue(uint16_t v) {
 // ── Forward decls ──────────────────────────────────────────────────────────────
 void renderGauge(int16_t angleDeg);
 void bitTest();
-IntegerMessage lastMessage = {};
-
-void reset() {
-  resetting = false;
-  dirtyBrake = false;
-  brightness = 0;
-}
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -75,7 +69,7 @@ static void initEspNowClient() {
       }
       message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::BrakePressure) {
-        lastMessage = message;
+        pressure = message.value;
         dirtyBrake = true;
       }
       if (message.name == ValueName::InstrumentLighting) {
@@ -113,7 +107,7 @@ void setup() {
   sprNeedle.setPivot(7, 150);
   sprNeedle.pushImage(0, 0, 15, 150, brakePressNeedle);
 
-  renderGauge(mapBrakeValue(lastMessage.value));
+  renderGauge(mapBrakeValue(pressure));
 
   initEspNowClient();
   // bitTest();   // optional boot-time sweep
@@ -121,21 +115,26 @@ void setup() {
 
 // ── Main loop ──────────────────────────────────────────────────────────────────
 void loop() {
+  if (resetting) {
+    resetting = false;
+    pressure = 0;
+    brightness = 0;
+    dirtyBrake = true;
+    lastFrameMs = 0;
+  }
+
   const uint32_t now = millis();
   const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
 
-  if (resetting) {
-    reset();
-
-    renderGauge(mapBrakeValue(0));
-    setBrightness(0);
-  } else if (dirtyBrake && frameDue) {
+  if (dirtyBrake && frameDue) {
     noInterrupts();
     dirtyBrake = false;
+    const uint16_t p = pressure;
+    const uint16_t b = brightness;
     interrupts();
 
-    renderGauge(mapBrakeValue(lastMessage.value));
-    setBrightness(brightness);
+    renderGauge(mapBrakeValue(p));
+    setBrightness(b);
     lastFrameMs = now;
   }
 

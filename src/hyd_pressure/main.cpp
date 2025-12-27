@@ -93,6 +93,9 @@ static void initEspNowClient() {
         brightness = message.value;
         dirty = true;
       }
+      if (message.name == ValueName::MissionChanged) {
+        resetting = true;
+      }
       break;
     default:
       return;
