@@ -31,7 +31,7 @@ void reset() {
   ifei = IfeiMessage{};
   sai = SaiMessage{};
   airspeed = 0;
-  vsi = 0;
+  vsi = 65535 / 2;
   voltU = 0;
   voltE = 0;
   hydIndBrake = 0;
