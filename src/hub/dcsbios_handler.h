@@ -33,6 +33,7 @@ void reset() {
   airspeed = 0;
   vsi = 0;
   voltU = 0;
+  voltE = 0;
   hydIndBrake = 0;
   cabinAltIndicator = 0;
   hydPressL = 0;

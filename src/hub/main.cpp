@@ -93,6 +93,7 @@ void loop() {
   }
 
   bool periodicSend = previousMissionType == MissionType::Hornet && now - lastPeriodicSendAt > periodicMessageInterval;
+  periodicSend = false; // Disable for now, need to check if this is really necessary
   if (periodicSend) {
     lastPeriodicSendAt = now;
   }
