@@ -1,6 +1,5 @@
 #include <FS.h>
 #include <LittleFS.h>
-#include <lvgl.h>
 #include <cctype>
 #include <cstring>
 #include "display_driver.h"
@@ -13,13 +12,13 @@ unsigned int ifeiColor = COLOR_DAY;
 unsigned int ifeiBrightness = 0;
 bool forceUpdate = false;
 
-// Create tft screen 
+// Create tft screen
 LGFX tft;
 
 // Create sprites
 LGFX_Sprite twoDigitSprite(&tft);   // Data digits sprite (RPM/OIL)
 LGFX_Sprite threeDigitSprite(&tft); // Data digits sprite (TEMP/FF)
-LGFX_Sprite labelSprite(&tft); // Text label sprite 
+LGFX_Sprite labelSprite(&tft); // Text label sprite
 LGFX_Sprite fuelSprite(&tft);   // Fuel sprite
 LGFX_Sprite clockSprite(&tft);  // Clock sprite
 
@@ -90,7 +89,7 @@ enum DisplayName {
 };
 
 //################ Configure Display elelments ###############################
-//{width,hight, posx, posy, textalign, sprite, value} 
+//{width,hight, posx, posy, textalign, sprite, value}
 int globalOffsetX = 30;
 int globalOffsetY = 10;
 DisplayElement displayElements[] = {
@@ -128,13 +127,13 @@ DisplayElement displayElements[] = {
 //additionl sprites for scale and scale numbers as well as a blank sprite
 void createImageSprite() {
   int j = 0;
-  //Left Nozzel White 
+  //Left Nozzel White
   for (int i = 0; i <= 120; i += 10){
     String filename = "/White/L" + String(i) + ".bmp";
     leftNozzleSprites[j].setPsram(true);
     leftNozzleSprites[j].setColorDepth(24);
     leftNozzleSprites[j].createFromBmp(LittleFS, filename.c_str());
- 
+
     j++;
   }
   //Left Nozzel Green
@@ -150,9 +149,9 @@ void createImageSprite() {
   leftNozzleSprites[j].setColorDepth(24);
   leftNozzleSprites[j].createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
   leftNozzleSprites[j].fillScreen(0x000000U);
-  
+
   j = 0;
-  //Right Nozzel White 
+  //Right Nozzel White
   for (int k = 0; k <= 120; k += 10){
     String filename = "/White/R" + String(k) + ".bmp";
     rightNozzleSprites[j].setPsram(true);
@@ -160,8 +159,8 @@ void createImageSprite() {
     rightNozzleSprites[j].createFromBmp(LittleFS,filename.c_str());
     j++;
   }
-  
-  //Right Nozzel Green 
+
+  //Right Nozzel Green
   for (int k = 0; k <= 120; k += 10){
     String filename = "/Green/R" + String(k) + ".bmp";
     rightNozzleSprites[j].setPsram(true);
@@ -186,27 +185,27 @@ void createDisplayElements() {
   twoDigitSprite.setColorDepth(24);
   twoDigitSprite.setTextWrap(false);
   twoDigitSprite.setTextColor(ifeiColor);
-    
+
   threeDigitSprite.createSprite(displayElements[TMPL].spriteWidth, displayElements[TMPL].spriteHeight);
   threeDigitSprite.loadFont(LittleFS,"/Fonts/IFEI-Data-36.vlw");
   threeDigitSprite.setFont(threeDigitSprite.getFont());
   threeDigitSprite.setColorDepth(24);
   threeDigitSprite.setTextWrap(false);
   threeDigitSprite.setTextColor(ifeiColor);
-    
+
   labelSprite.createSprite(displayElements[RPMT].spriteWidth, displayElements[RPMT].spriteHeight);
   labelSprite.loadFont(LittleFS,"/Fonts/IFEI-Labels-16.vlw");
   labelSprite.setFont(labelSprite.getFont());
   labelSprite.setColorDepth(24);
   labelSprite.setTextColor(ifeiColor);
-  
+
   clockSprite.createSprite(displayElements[CLOCKU].spriteWidth, displayElements[CLOCKU].spriteHeight);
   clockSprite.loadFont(LittleFS,"/Fonts/IFEI-Data-32.vlw");
   clockSprite.setFont(clockSprite.getFont());
   clockSprite.setColorDepth(24);
   clockSprite.setTextWrap(false);
   clockSprite.setTextColor(ifeiColor);
-  
+
   tagSprite.createSprite(displayElements[ZULU].spriteWidth, displayElements[ZULU].spriteHeight);
   tagSprite.loadFont(LittleFS,"/Fonts/IFEI-Labels-16.vlw");
   tagSprite.setFont(labelSprite.getFont());
@@ -221,7 +220,7 @@ void createDisplayElements() {
   fuelSprite.setTextColor(ifeiColor);
 }
 
-//Align text within its sprite. 
+//Align text within its sprite.
 int setTextAlignment(DisplayElement element, TextAlignment alignment) {
   if (alignment == TextAlignmentRight) {
     return element.spriteWidth - element.sprite->textWidth(element.value);
