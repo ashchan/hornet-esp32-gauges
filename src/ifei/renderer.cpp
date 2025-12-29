@@ -333,32 +333,40 @@ void renderClock(DisplayElement element, String& hours, String& minutes, String&
 
 void renderClocks(IfeiMessage message) {
   String hours = String(message.clockH);
-  if (hours == "") {
-  } else if (hours.toInt() < 10) {
+  if (message.clockH == -1) {
+    hours = " ";
+  } else if (message.clockH < 10) {
     hours = "0" + hours;
   }
   String minutes = String(message.clockM);
-  if (minutes == "") {
-  } else if (minutes.toInt() < 10) {
+  if (message.clockM == -1) {
+    minutes = " ";
+  } else if (message.clockM < 10) {
     minutes = "0" + minutes;
   }
   String seconds = String(message.clockS);
-  if (seconds == "") {
-  } else if (seconds.toInt() < 10) {
+  if (message.clockS == -1) {
+    seconds = " ";
+  } else if (message.clockS < 10) {
     seconds = "0" + seconds;
   }
   renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
 
   // TODO: timer could show as " : : "
   hours = String(message.timerH);
+  if (message.timerH == -1) {
+    hours = " ";
+  }
   minutes = String(message.timerM);
-  if (minutes == "") {
-  } else if (minutes.toInt() < 10) {
+  if (message.timerM == -1) {
+    minutes = " ";
+  } else if (message.timerM < 10) {
     minutes = "0" + minutes;
   }
   seconds = String(message.timerS);
-  if (seconds == "") {
-  } else if (seconds.toInt() < 10) {
+  if (message.timerS == -1) {
+    seconds = " ";
+  } else if (message.timerS < 10) {
     seconds = "0" + seconds;
   }
   renderClock(displayElements[CLOCKL], hours, minutes, seconds, (char)message.dd3, (char)message.dd4);
@@ -374,6 +382,14 @@ void initIfeiRenderer() {
   createDisplayElements();
   tft.setColorDepth(24);
   tft.fillScreen(0x000000U);
+}
+
+void setNumber(int value, char* dest, unsigned int len) {
+  if (value < 0) {
+    snprintf(dest, len, " ");
+    return;
+  }
+  snprintf(dest, len, "%u", value);
 }
 
 void renderIfeiMessage(IfeiMessage message) {
@@ -393,13 +409,13 @@ void renderIfeiMessage(IfeiMessage message) {
   unsigned int len = sizeof(value);
 
   // RPML
-  snprintf(value, len, "%u", message.rpmL);
+  setNumber(message.rpmL, value, len);
   if (forceUpdate || strcmp(displayElements[RPML].value, value) != 0) {
     strcpy(displayElements[RPML].value, value);
     updateElement(displayElements[RPML]);
   }
   // RPMR
-  snprintf(value, len, "%u", message.rpmR);
+  setNumber(message.rpmR, value, len);
   if (forceUpdate || strcmp(displayElements[RPMR].value, value) != 0) {
     strcpy(displayElements[RPMR].value, value);
     updateElement(displayElements[RPMR]);
@@ -411,13 +427,13 @@ void renderIfeiMessage(IfeiMessage message) {
     updateElement(displayElements[RPMT]);
   }
   // TMPL
-  snprintf(value, len, "%u", message.tempL);
+  setNumber(message.tempL, value, len);
   if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
     strcpy(displayElements[TMPL].value, value);
     updateElement(displayElements[TMPL]);
   }
   // TMPR
-  snprintf(value, len, "%u", message.tempR);
+  setNumber(message.tempR, value, len);
   if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
     strcpy(displayElements[TMPR].value, value);
     updateElement(displayElements[TMPR]);
@@ -429,13 +445,13 @@ void renderIfeiMessage(IfeiMessage message) {
     updateElement(displayElements[TMPT]);
   }
   // FFL
-  snprintf(value, len, "%u", message.ffL);
+  setNumber(message.ffL, value, len);
   if (forceUpdate || strcmp(displayElements[FFL].value, value) != 0) {
     strcpy(displayElements[FFL].value, value);
     updateElement(displayElements[FFL]);
   }
   // FFR
-  snprintf(value, len, "%u", message.ffR);
+  setNumber(message.ffR, value, len);
   if (forceUpdate || strcmp(displayElements[FFR].value, value) != 0) {
     strcpy(displayElements[FFR].value, value);
     updateElement(displayElements[FFR]);
@@ -452,13 +468,13 @@ void renderIfeiMessage(IfeiMessage message) {
     updateElement(displayElements[FFTL]);
   }
   // OILL
-  snprintf(value, len, "%u", message.oilPressL);
+  setNumber(message.oilPressL, value, len);
   if (forceUpdate || strcmp(displayElements[OILL].value, value) != 0) {
     strcpy(displayElements[OILL].value, value);
     updateElement(displayElements[OILL]);
   }
   // OILR
-  snprintf(value, len, "%u", message.oilPressR);
+  setNumber(message.oilPressR, value, len);
   if (forceUpdate || strcmp(displayElements[OILR].value, value) != 0) {
     strcpy(displayElements[OILR].value, value);
     updateElement(displayElements[OILR]);
@@ -491,7 +507,7 @@ void renderIfeiMessage(IfeiMessage message) {
     updateElement(displayElements[FUELL]);
   }
   // BINGO
-  snprintf(value, len, "%u", message.bingo);
+  setNumber(message.bingo, value, len);
   if (forceUpdate || strcmp(displayElements[BINGO].value, value) != 0) {
     strcpy(displayElements[BINGO].value, value);
     updateElement(displayElements[BINGO]);

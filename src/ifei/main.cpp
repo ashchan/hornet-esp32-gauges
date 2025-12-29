@@ -4,8 +4,10 @@
 #include <esp_now.h>
 #include "message.h"
 #include "renderer.h"
+
 #define Serial Serial0
-IfeiMessage lastMessage = {};
+
+static IfeiMessage lastMessage{};
 static volatile uint32_t lastMessageMs = 0;
 
 static void initEspNowClient() {

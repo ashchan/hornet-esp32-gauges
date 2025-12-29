@@ -57,32 +57,32 @@ struct __attribute__((packed)) RadarAltimeterMessage {
 struct __attribute__((packed)) IfeiMessage {
   MessageHeader header{category: MessageCategory::IFEI};
 
-  uint8_t clockH;
-  uint8_t clockM;
-  uint8_t clockS;
+  int8_t clockH = -1; // use -1 to represent space(empty)
+  int8_t clockM = -1;
+  int8_t clockS = -1;
 
-  uint8_t timerH;
-  uint8_t timerM;
-  uint8_t timerS;
+  int8_t timerH = -1;
+  int8_t timerM = -1;
+  int8_t timerS = -1;
 
-  uint16_t bingo;
+  int16_t bingo = -1;
 
-  uint8_t dd1; // ":"
+  uint8_t dd1;
   uint8_t dd2;
-  uint8_t dd3;
-  uint8_t dd4;
+  uint8_t dd3 = 58; // ":"
+  uint8_t dd4 = 58; // ":"
 
-  uint8_t ffL;
-  uint8_t ffR;
+  int16_t ffL = -1;
+  int16_t ffR = -1;
 
-  uint8_t rpmL;
-  uint8_t rpmR;
+  int8_t rpmL = -1;
+  int8_t rpmR = -1;
 
-  uint16_t tempL;
-  uint16_t tempR;
+  int16_t tempL = -1;
+  int16_t tempR = -1;
 
-  uint16_t oilPressL;
-  uint16_t oilPressR;
+  int16_t oilPressL = -1;
+  int16_t oilPressR = -1;
   uint16_t extNozzlePosL;
   uint16_t extNozzlePosR;
 

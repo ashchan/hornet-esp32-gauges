@@ -22,8 +22,8 @@ static uint16_t hydPressR;
 static uint16_t instrumentLighting;
 static uint16_t consoleLighting;
 
-uint16_t parseU16(const char *s);
-uint8_t parseU8(const char *s);
+int16_t parse16(const char *s);
+int8_t parse8(const char *s);
 
 void reset() {
   altimeter = AltimeterMessage{};
@@ -180,36 +180,36 @@ DcsBios::IntegerBuffer radaltAltPtrBuffer(FA_18C_hornet_RADALT_ALT_PTR, onRadalt
 #pragma region IFEI
 //################## RPM  ##################
 void onIfeiRpmLChange(char* newValue) {
-  ifei.rpmL = parseU8(newValue);
+  ifei.rpmL = parse8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmLBuffer(FA_18C_hornet_IFEI_RPM_L_A, onIfeiRpmLChange);
 
 void onIfeiRpmRChange(char* newValue) {
-  ifei.rpmR = parseU8(newValue);
+  ifei.rpmR = parse8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmRBuffer(FA_18C_hornet_IFEI_RPM_R_A, onIfeiRpmRChange);
 
 void onIfeiRpmTextureChange(char* newValue) {
-  ifei.rpmTex = parseU8(newValue);
+  ifei.rpmTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiRpmTextureBuffer(FA_18C_hornet_IFEI_RPM_TEXTURE_A, onIfeiRpmTextureChange);
 
 // ################## TEMP  ##################
 //Left
 void onIfeiTempLChange(char* newValue) {
-  ifei.tempL = parseU16(newValue);
+  ifei.tempL = parse16(newValue);
 }
 DcsBios::StringBuffer<3> ifeiTempLBuffer(FA_18C_hornet_IFEI_TEMP_L_A, onIfeiTempLChange);
 
 //Right
 void onIfeiTempRChange(char* newValue) {
-  ifei.tempR = parseU16(newValue);
+  ifei.tempR = parse16(newValue);
 }
 DcsBios::StringBuffer<3> ifeiTempRBuffer(FA_18C_hornet_IFEI_TEMP_R_A, onIfeiTempRChange);
 
 //Texture
 void onIfeiTempTextureChange(char* newValue) {
-  ifei.tempTex = parseU8(newValue);
+  ifei.tempTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiTempTextureBuffer(FA_18C_hornet_IFEI_TEMP_TEXTURE_A, onIfeiTempTextureChange);
 
@@ -229,38 +229,38 @@ DcsBios::StringBuffer<3> ifeiCodesBuffer(FA_18C_hornet_IFEI_CODES_A, onIfeiCodes
 //################## FUEL FLOW  ##################
 //LEFT
 void onIfeiFfLChange(char* newValue) {
-  ifei.ffL = parseU8(newValue);
+  ifei.ffL = parse8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiFfLBuffer(FA_18C_hornet_IFEI_FF_L_A, onIfeiFfLChange);
 
 //Right
 void onIfeiFfRChange(char* newValue) {
-  ifei.ffR = parseU8(newValue);
+  ifei.ffR = parse8(newValue);
 }
 DcsBios::StringBuffer<3> ifeiFfRBuffer(FA_18C_hornet_IFEI_FF_R_A, onIfeiFfRChange);
 
 //Texture
 void onIfeiFfTextureChange(char* newValue) {
-  ifei.ffTex = parseU8(newValue);
+  ifei.ffTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiFfTextureBuffer(FA_18C_hornet_IFEI_FF_TEXTURE_A, onIfeiFfTextureChange);
 
 //################## OIL  ##################
 //Left
 void onIfeiOilPressLChange(char* newValue) {
-  ifei.oilPressL = parseU16(newValue);
+  ifei.oilPressL = parse16(newValue);
 }
 DcsBios::StringBuffer<3> ifeiOilPressLBuffer(FA_18C_hornet_IFEI_OIL_PRESS_L_A, onIfeiOilPressLChange);
 
 //Right
 void onIfeiOilPressRChange(char* newValue) {
-  ifei.oilPressR = parseU16(newValue);
+  ifei.oilPressR = parse16(newValue);
 }
 DcsBios::StringBuffer<3> ifeiOilPressRBuffer(FA_18C_hornet_IFEI_OIL_PRESS_R_A, onIfeiOilPressRChange);
 
 //Texture
 void onIfeiOilTextureChange(char* newValue) {
-  ifei.oilTex = parseU8(newValue);
+  ifei.oilTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiOilTextureBuffer(FA_18C_hornet_IFEI_OIL_TEXTURE_A, onIfeiOilTextureChange);
 
@@ -274,19 +274,19 @@ DcsBios::IntegerBuffer extNozzlePosLBuffer(FA_18C_hornet_EXT_NOZZLE_POS_L_A, 0xf
 
 //Pointer visibility
 void onIfeiLpointerTextureChange(char* newValue) {
-  ifei.lPointerTex = parseU8(newValue);
+  ifei.lPointerTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiLpointerTextureBuffer(FA_18C_hornet_IFEI_LPOINTER_TEXTURE_A, onIfeiLpointerTextureChange);
 
 //Scale visibility
 void onIfeiLscaleTextureChange(char* newValue) {
-  ifei.lScaleTex = parseU8(newValue);
+  ifei.lScaleTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiLscaleTextureBuffer(FA_18C_hornet_IFEI_LSCALE_TEXTURE_A, onIfeiLscaleTextureChange);
 
 //Scale numbers visibility
 void onIfeiL100TextureChange(char* newValue) {
-  ifei.l100Tex = parseU8(newValue);
+  ifei.l100Tex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiL100TextureBuffer(FA_18C_hornet_IFEI_L100_TEXTURE_A, onIfeiL100TextureChange);
 
@@ -299,19 +299,19 @@ DcsBios::IntegerBuffer extNozzlePosRBuffer(FA_18C_hornet_EXT_NOZZLE_POS_R_A, 0xf
 
 //Pointer visibility
 void onIfeiRpointerTextureChange(char* newValue) {
-  ifei.rPointerTex = parseU8(newValue);
+  ifei.rPointerTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiRpointerTextureBuffer(FA_18C_hornet_IFEI_RPOINTER_TEXTURE_A, onIfeiRpointerTextureChange);
 
 //Scale visibility
 void onIfeiRscaleTextureChange(char* newValue) {
-  ifei.rScaleTex = parseU8(newValue);
+  ifei.rScaleTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiRscaleTextureBuffer(FA_18C_hornet_IFEI_RSCALE_TEXTURE_A, onIfeiRscaleTextureChange);
 
 //Scale numbers visibility
 void onIfeiR100TextureChange(char* newValue) {
-  ifei.r100Tex = parseU8(newValue);
+  ifei.r100Tex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiR100TextureBuffer(FA_18C_hornet_IFEI_R100_TEXTURE_A, onIfeiR100TextureChange);
 
@@ -330,7 +330,7 @@ DcsBios::StringBuffer<6> ifeiTBuffer(FA_18C_hornet_IFEI_T_A, onIfeiTChange);
 
 //Tag L
 void onIfeiLTextureChange(char* newValue) {
-  ifei.lTex = parseU8(newValue);
+  ifei.lTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiLTextureBuffer(FA_18C_hornet_IFEI_L_TEXTURE_A, onIfeiLTextureChange);
 
@@ -348,20 +348,20 @@ DcsBios::StringBuffer<6> ifeiTimeSetModeBuffer(FA_18C_hornet_IFEI_TIME_SET_MODE_
 
 //Tag R
 void onIfeiRTextureChange(char* newValue) {
-  ifei.rTex = parseU8(newValue);
+  ifei.rTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiRTextureBuffer(FA_18C_hornet_IFEI_R_TEXTURE_A, onIfeiRTextureChange);
 
 //################## BINGO ##################
 //Texture
 void onIfeiBingoTextureChange(char* newValue) {
-  ifei.bingoTex = parseU8(newValue);
+  ifei.bingoTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiBingoTextureBuffer(FA_18C_hornet_IFEI_BINGO_TEXTURE_A, onIfeiBingoTextureChange);
 
 //Digits
 void onIfeiBingoChange(char* newValue) {
-  ifei.bingo = parseU16(newValue);
+  ifei.bingo = parse16(newValue);
 }
 DcsBios::StringBuffer<5> ifeiBingoBuffer(FA_18C_hornet_IFEI_BINGO_A, onIfeiBingoChange);
 
@@ -369,19 +369,19 @@ DcsBios::StringBuffer<5> ifeiBingoBuffer(FA_18C_hornet_IFEI_BINGO_A, onIfeiBingo
 //Upper
 //Hours
 void onIfeiClockHChange(char* newValue) {
-  ifei.clockH = parseU8(newValue);
+  ifei.clockH = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiClockHBuffer(FA_18C_hornet_IFEI_CLOCK_H_A, onIfeiClockHChange);
 
 //Minutes
 void onIfeiClockMChange(char* newValue) {
-  ifei.clockM = parseU8(newValue);
+  ifei.clockM = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiClockMBuffer(FA_18C_hornet_IFEI_CLOCK_M_A, onIfeiClockMChange);
 
 //Seconds
 void onIfeiClockSChange(char* newValue) {
-  ifei.clockS = parseU8(newValue);
+  ifei.clockS = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiClockSBuffer(FA_18C_hornet_IFEI_CLOCK_S_A, onIfeiClockSChange);
 
@@ -399,26 +399,26 @@ DcsBios::StringBuffer<1> ifeiDd2Buffer(FA_18C_hornet_IFEI_DD_2_A, onIfeiDd2Chang
 
 //Tag Z
 void onIfeiZTextureChange(char* newValue) {
-  ifei.zTex = parseU8(newValue);
+  ifei.zTex = parse8(newValue);
 }
 DcsBios::StringBuffer<1> ifeiZTextureBuffer(FA_18C_hornet_IFEI_Z_TEXTURE_A, onIfeiZTextureChange);
 
 //Lower
 //Hours
 void onIfeiTimerHChange(char* newValue) {
-  ifei.timerH = parseU8(newValue);
+  ifei.timerH = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiTimerHBuffer(FA_18C_hornet_IFEI_TIMER_H_A, onIfeiTimerHChange);
 
 //Minutes
 void onIfeiTimerMChange(char* newValue) {
-  ifei.timerM = parseU8(newValue);
+  ifei.timerM = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiTimerMBuffer(FA_18C_hornet_IFEI_TIMER_M_A, onIfeiTimerMChange);
 
 //Seconds
 void onIfeiTimerSChange(char* newValue) {
-  ifei.timerS = parseU8(newValue);
+  ifei.timerS = parse8(newValue);
 }
 DcsBios::StringBuffer<2> ifeiTimerSBuffer(FA_18C_hornet_IFEI_TIMER_S_A, onIfeiTimerSChange);
 
@@ -487,7 +487,7 @@ DcsBios::IntegerBuffer saiPointerVerBuffer(FA_18C_hornet_SAI_POINTER_VER, onSaiP
 #pragma endregion SARI
 
 #pragma region Helpers
-uint16_t parseU16(const char *s) {
+int16_t parse16(const char *s) {
   if (!s) {
     return 0;
   }
@@ -498,17 +498,17 @@ uint16_t parseU16(const char *s) {
   }
 
   if (*s == '\0') {
-    return 0;
+    return -1;
   }
 
-  uint32_t v = 0;
+  int32_t v = 0;
   bool any = false;
 
   while (*s >= '0' && *s <= '9') {
     any = true;
-    v = v * 10u + (uint32_t)(*s - '0');
-    if (v > 65535u) {
-      v = 65535u; // clamp to uint16_t max
+    v = v * 10 + (int32_t)(*s - '0');
+    if (v > 65535) {
+      v = 65535; // clamp to uint16_t max
       break;
     }
     ++s;
@@ -518,10 +518,10 @@ uint16_t parseU16(const char *s) {
     return 0; // no digits found
   }
 
-  return (uint16_t)v;
+  return (int16_t)v;
 }
 
-uint8_t parseU8(const char *s) {
+int8_t parse8(const char *s) {
   if (!s) {
     return 0;
   }
@@ -532,17 +532,17 @@ uint8_t parseU8(const char *s) {
   }
 
   if (*s == '\0') {
-    return 0;
+    return -1;
   }
 
-  uint16_t v = 0;
+  int16_t v = 0;
   bool any = false;
 
   while (*s >= '0' && *s <= '9') {
     any = true;
-    v = (uint16_t)(v * 10u + (uint16_t)(*s - '0'));
-    if (v > 255u) {
-      v = 255u; // clamp to uint8_t max
+    v = (int16_t)(v * 10 + (int16_t)(*s - '0'));
+    if (v > 255) {
+      v = 255; // clamp to uint8_t max
       break;
     }
     ++s;
@@ -552,6 +552,6 @@ uint8_t parseU8(const char *s) {
     return 0; // no digits found
   }
 
-  return (uint8_t)v;
+  return (int8_t)v;
 }
 #pragma endregion Helpers
