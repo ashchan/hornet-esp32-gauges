@@ -10,17 +10,6 @@ static portMUX_TYPE msgMux = portMUX_INITIALIZER_UNLOCKED;
 static SaiMessage lastMessage{};
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
-bool resetting = false;
-
-#define DEFAULT_BRIGHTNESS 20
-void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
-  static uint16_t oldValue = 0;
-  uint16_t newValue = map(value, 0, 65535, DEFAULT_BRIGHTNESS, 80);
-  if (oldValue != newValue) {
-    oldValue = newValue;
-    // TODO: implement brightness control
-  }
-}
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -49,9 +38,6 @@ static void initEspNowClient() {
       if (message.name == ValueName::InstrumentLighting) {
         brightness = message.value;
         hasNewMessage = true;
-      }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
       }
     }
   });
