@@ -21,6 +21,7 @@ static void initEspNowClient() {
     return;
   }
 
+  /*
   esp_now_register_recv_cb([](const esp_now_recv_info_t* info, const uint8_t* data, int len) {
     if (len < (int)sizeof(MessageHeader)) {
       return;
@@ -40,7 +41,7 @@ static void initEspNowClient() {
         hasNewMessage = true;
       }
     }
-  });
+  });*/
 }
 
 void setup() {

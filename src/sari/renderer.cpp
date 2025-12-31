@@ -247,6 +247,29 @@ DcsBios::IntegerBuffer saiAttWarningFlagBuffer(FA_18C_hornet_SAI_ATT_WARNING_FLA
 bool spiffenabled = false;
 
 void initRenderer() {
+  delay(200);
+
+  panel_power_and_reset();
+  st7701_init_rgb565();
+
+  tft.begin();
+
+  tft.setColorDepth(16);
+  tft.setSwapBytes(false);
+  tft.setRotation(0);
+  tft.fillScreen(TFT_BLACK);
+
+  tft.fillRect(0,   0, 160, 240, TFT_RED);
+  tft.fillRect(160, 0, 160, 240, TFT_GREEN);
+  tft.fillRect(320, 0, 160, 240, TFT_BLUE);
+
+  tft.fillRect(0, 240, 160, 240, TFT_CYAN);
+  tft.fillRect(160,240, 160, 240, TFT_MAGENTA);
+  tft.fillRect(320,240, 160, 240, TFT_YELLOW);
+
+  tft.drawString("RGB", 10, 10);
+
+  return;
   // Initialize TFT display
   if (!tft.init()) {
     Serial.println("Failed to initialize TFT");
