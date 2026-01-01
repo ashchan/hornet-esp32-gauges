@@ -13,6 +13,7 @@
 #include "TCA9554PWR.h"
 #include "Display_ST7701.h"
 #include "message.h"
+#include "renderer.h"
 
 extern "C" {
   extern const lv_img_dsc_t SARIBackground;
@@ -152,7 +153,6 @@ static SaiMessage lastMessage = {
 };
 uint16_t brightness = 0;
 volatile bool hasNewMessage = false;
-bool resetting = false;
 
 #define DEFAULT_BRIGHTNESS 20
 void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
@@ -162,21 +162,6 @@ void setBrightness(uint16_t value = DEFAULT_BRIGHTNESS) {
     oldValue = newValue;
     Set_Backlight(newValue);
   }
-}
-
-void reset() {
-  lastMessage = {
-    .slipBall = DCS_MID_CODE,
-    .bank = DCS_MID_CODE,
-    .rateOfTurn = DCS_MID_CODE,
-    .manPitchAdj = DCS_MID_CODE,
-    .pitch = DCS_MID_CODE,
-    .attWarningFlag = 65535,
-    .pointerHor = DCS_MID_CODE,
-    .pointerVer = DCS_MID_CODE,
-  };
-  brightness = 0;
-  resetting = false;
 }
 
 static void updateRendering() {
@@ -338,14 +323,12 @@ static void initEspNowClient() {
         brightness = message.value;
         hasNewMessage = true;
       }
-      if (message.name == ValueName::MissionChanged) {
-        resetting = true;
-      }
     }
   });
 }
 
-// ----------------- Setup / Loop -----------------
+HornetADI_BallOnly*    g_ball;
+
 void setup() {
   Serial.begin(115200);
 
@@ -397,6 +380,7 @@ void setup() {
   globe_base_y   = (DISP_HEIGHT - globe_h) / 2 + GLOBE_Y_OFFSET;
   lv_obj_set_pos(globe_holder, globe_center_x, globe_base_y);
 
+  /*
   globe_img = lv_img_create(globe_holder);
   lv_img_set_src(globe_img, &SARIGlobe);
   {
@@ -405,6 +389,20 @@ void setup() {
     lv_img_set_pivot(globe_img, pivot_x, pivot_y);
     lv_obj_set_pos(globe_img, (globe_w / 2) - pivot_x, (globe_h / 2) - pivot_y);
   }
+  */
+
+
+  g_ball = new HornetADI_BallOnly(lv_scr_act(), 300);
+  lv_obj_center(g_ball->obj());
+
+  // Classic ball colors
+  g_ball->set_background_colors(lv_color_white(), lv_color_black());
+
+  // Dual sym colors: black on sky, white on ground
+  g_ball->set_sym_contrast_colors(lv_color_black(), lv_color_white());
+
+  g_ball->set_px_per_deg(5.0f);
+
 
   lv_obj_t *sari_bg = lv_img_create(scr);
   lv_img_set_src(sari_bg, &SARIBackground);
@@ -440,24 +438,31 @@ void setup() {
   lv_obj_align(sariCaged_img, LV_ALIGN_CENTER, SARICAGED_X_OFFSET, SARICAGED_Y_OFFSET);
   lv_img_set_pivot(sariCaged_img, SARICaged.header.w, 0); // top-right
   lv_img_set_angle(sariCaged_img, 0);
-
-  updateRendering();
+  //updateRendering();
 
   initEspNowClient();
 }
 
 void loop() {
+  static float pitchChange = 1.0f;
+  static float rollChange = 1.0f;
+  static float pitch = 0;
+  static float roll  = 0;
+
+  pitch += pitchChange;
+  roll += rollChange;
+
+  if (pitch > 90) pitchChange = -1.0f;
+  if (pitch < -90) pitchChange = 1.0f;
+
+  hasNewMessage = true;
   const uint32_t now = millis();
   static uint32_t lastUpdatedAt = 0;
-  if (resetting) {
-    reset();
-    updateRendering();
-  } else {
-    if (now - lastUpdatedAt > 40 && hasNewMessage) {
-      hasNewMessage = false;
-      lastUpdatedAt = now;
-      updateRendering();
-    }
+  if (now - lastUpdatedAt > 40 && hasNewMessage) {
+    hasNewMessage = false;
+    lastUpdatedAt = now;
+    //updateRendering();
+    g_ball->update(pitch, roll);
   }
 
   static uint32_t lastLvglTimerHandlerAt = 0;
