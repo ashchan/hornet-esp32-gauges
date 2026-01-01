@@ -175,10 +175,10 @@ static void st7701_init_rgb565() {
   delay(120);
 
   stCmd(0x3A);
-  stDat(0x50);
+  stDat(0x66);
 
   stCmd(0x36);
-  stDat(0x08);
+  stDat(0x00);
 
   stCmd(0x29);
   delay(20);
