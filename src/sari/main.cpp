@@ -54,6 +54,14 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   static uint32_t lastUpdatedAt = 0;
+  lastMessage.pitch += 200;
+  lastMessage.bank += 200;
+  lastMessage.slipBall += 200;
+  lastMessage.rateOfTurn += 200;
+  lastMessage.pointerHor += 200;
+  lastMessage.pointerVer += 200;
+  lastMessage.manPitchAdj += 200;
+  //lastMessage.attWarningFlag = true;
   hasNewMessage = true;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;
