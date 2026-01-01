@@ -21,8 +21,7 @@ static void initEspNowClient() {
     return;
   }
 
-  /*
-  esp_now_register_recv_cb([](const esp_now_recv_info_t* info, const uint8_t* data, int len) {
+  esp_now_register_recv_cb([](const uint8_t* mac, const uint8_t* data, int len) {
     if (len < (int)sizeof(MessageHeader)) {
       return;
     }
@@ -41,7 +40,7 @@ static void initEspNowClient() {
         hasNewMessage = true;
       }
     }
-  });*/
+  });
 }
 
 void setup() {
@@ -55,6 +54,7 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
   static uint32_t lastUpdatedAt = 0;
+  hasNewMessage = true;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;
     lastUpdatedAt = now;

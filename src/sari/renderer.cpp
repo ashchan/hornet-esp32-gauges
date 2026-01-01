@@ -253,32 +253,10 @@ void initRenderer() {
   st7701_init_rgb565();
 
   tft.begin();
-
-  tft.setColorDepth(16);
+  tft.setColorDepth(colordepth);
   tft.setSwapBytes(false);
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
-
-  tft.fillRect(0,   0, 160, 240, TFT_RED);
-  tft.fillRect(160, 0, 160, 240, TFT_GREEN);
-  tft.fillRect(320, 0, 160, 240, TFT_BLUE);
-
-  tft.fillRect(0, 240, 160, 240, TFT_CYAN);
-  tft.fillRect(160,240, 160, 240, TFT_MAGENTA);
-  tft.fillRect(320,240, 160, 240, TFT_YELLOW);
-
-  tft.drawString("RGB", 10, 10);
-
-  return;
-  // Initialize TFT display
-  if (!tft.init()) {
-    Serial.println("Failed to initialize TFT");
-    return;
-  }
-
-  tft.setRotation(1);
-
-  tft.begin();
 
   if(!LittleFS.begin(true)) {
     Serial.println("An Error has occurred while mounting LittleFS");
@@ -287,12 +265,11 @@ void initRenderer() {
   }
 
   create_display_elements();
-  tft.setColorDepth(colordepth);
   //tft.fillScreen(0x000000U);
   //tft.fillScreen(tft.color888(141,76,71));
   //sADI_BALL[0].setPivot(sADI_BALL[0].width() / 2, sADI_BALL[0].height() / 2);
-  //sADI_BALL.pushRotateZoom(&tft,100,0,90,2,2);
-  //sADI_BALL.pushSprite(&tft,150,0);
+  sADI_BALL.pushRotateZoom(&tft,100,0,90,2,2);
+  sADI_BALL.pushSprite(&tft,150,0);
   //sMainSprite.fillScreen(0xFF0000U);
   //sMainSprite.drawRect(240, 240, 50, 50, 0x00FF00U);
   //sMainSprite.pushSprite(&tft,0,0);
@@ -394,6 +371,7 @@ void update_positions(){
       }
 
 }
+
 void render(SaiMessage message) {
   static std::uint32_t sec, psec;
   static std::uint32_t fps = 0, frame_count = 0;
@@ -424,7 +402,7 @@ void render(SaiMessage message) {
     //Draw final result
   sMainSprite[flip].pushSprite(&tft,0,0);
 #else
-tft.startWrite();
+  tft.startWrite();
   //sprite->clear();
 
   sADI_BALL.pushRotateZoom(&sMainSprite[flip],240,240,display_elements[ADI_BALL].angel,1,1,0x00FF00U);
