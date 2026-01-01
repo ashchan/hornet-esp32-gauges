@@ -235,7 +235,7 @@ public:
       cfg.pin_hsync   = GPIO_NUM_38;
       cfg.pin_pclk    = GPIO_NUM_41;
 
-      cfg.freq_write  = 30 * 1000 * 1000;
+      cfg.freq_write  = 15 * 1000 * 1000;
 
       cfg.hsync_polarity    = 0;
       cfg.hsync_front_porch = 50;
