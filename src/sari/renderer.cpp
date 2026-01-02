@@ -22,6 +22,43 @@ LGFX_Sprite sBANK_INDICATOR;
 
 uint8_t colordepth = 16;
 
+void cleanSpriteEdges(LGFX_Sprite* sprite) {
+  // Replace near-green pixels with pure green for proper transparency
+  for (int y = 0; y < sprite->height(); y++) {
+    for (int x = 0; x < sprite->width(); x++) {
+      uint32_t pixel = sprite->readPixel(x, y);
+      // Extract RGB components (RGB565 format)
+      uint8_t r5 = (pixel >> 11) & 0x1F;
+      uint8_t g6 = (pixel >> 5) & 0x3F;
+      uint8_t b5 = pixel & 0x1F;
+
+      // Check if pixel is close to green (0x00FF00 = R:0 G:63 B:0 in RGB565)
+      // Allow some tolerance for anti-aliased edges
+      if (g6 > 50 && r5 < 8 && b5 < 8) { // Close to green
+        sprite->drawPixel(x, y, 0x00FF00U); // Pure green
+      }
+    }
+  }
+}
+
+void cleanSpriteEdgesAggressive(LGFX_Sprite* sprite) {
+  // More aggressive cleaning for problematic sprites like off flag
+  for (int y = 0; y < sprite->height(); y++) {
+    for (int x = 0; x < sprite->width(); x++) {
+      uint32_t pixel = sprite->readPixel(x, y);
+      // Extract RGB components (RGB565 format)
+      uint8_t r5 = (pixel >> 11) & 0x1F;
+      uint8_t g6 = (pixel >> 5) & 0x3F;
+      uint8_t b5 = pixel & 0x1F;
+
+      // Much looser tolerance - catch any pixel with significant green
+      if (g6 > 30 && r5 < 12 && b5 < 12) { // Very loose green detection
+        sprite->drawPixel(x, y, 0x00FF00U); // Pure green
+      }
+    }
+  }
+}
+
 //create sprites for digital display areas and text lables; Fonts loaded from LittleFS
 void create_display_elements() {
   for (int i = 0; i < 2; i++) {
@@ -32,46 +69,57 @@ void create_display_elements() {
   sADI_BALL.setPsram(true);
   sADI_BALL.setColorDepth(colordepth);
   sADI_BALL.createFromBmp(LittleFS, "/Ball_big.bmp");
+  cleanSpriteEdges(&sADI_BALL);
 
   sADI_BEZEL.setPsram(true);
   sADI_BEZEL.setColorDepth(colordepth);
   sADI_BEZEL.createFromBmp(LittleFS, "/Bazel_outer_big.bmp");
+  cleanSpriteEdges(&sADI_BEZEL);
 
   sADI_BEZEL_Inner.setPsram(true);
   sADI_BEZEL_Inner.setColorDepth(colordepth);
   sADI_BEZEL_Inner.createFromBmp(LittleFS, "/Bazel_inner_big.bmp");
+  cleanSpriteEdges(&sADI_BEZEL_Inner);
 
   sADI_BEZEL_Static.setPsram(true);
   sADI_BEZEL_Static.setColorDepth(colordepth);
   sADI_BEZEL_Static.createFromBmp(LittleFS, "/Bazel_static_big.bmp");
+  cleanSpriteEdges(&sADI_BEZEL_Static);
 
   sADI_OFF_FLAG.setPsram(true);
   sADI_OFF_FLAG.setColorDepth(colordepth);
   sADI_OFF_FLAG.createFromBmp(LittleFS, "/WarnFlag_big.bmp");
+  cleanSpriteEdgesAggressive(&sADI_OFF_FLAG);
 
   sADI_WINGS.setPsram(true);
   sADI_WINGS.setColorDepth(colordepth);
   sADI_WINGS.createFromBmp(LittleFS, "/Wing_big.bmp");
+  cleanSpriteEdges(&sADI_WINGS);
 
   sBANK_INDICATOR.setPsram(true);
   sBANK_INDICATOR.setColorDepth(colordepth);
   sBANK_INDICATOR.createFromBmp(LittleFS, "/Bank.bmp");
+  cleanSpriteEdges(&sBANK_INDICATOR);
 
   sADI_SLIP_BALL.setPsram(true);
   sADI_SLIP_BALL.setColorDepth(colordepth);
   sADI_SLIP_BALL.createFromBmp(LittleFS, "/Slip-Ball.bmp");
+  cleanSpriteEdges(&sADI_SLIP_BALL);
 
   sILS_POINTER_H.setPsram(true);
   sILS_POINTER_H.setColorDepth(colordepth);
   sILS_POINTER_H.createFromBmp(LittleFS, "/ILS-H.bmp");
+  cleanSpriteEdges(&sILS_POINTER_H);
 
   sILS_POINTER_V.setPsram(true);
   sILS_POINTER_V.setColorDepth(colordepth);
   sILS_POINTER_V.createFromBmp(LittleFS, "/ILS-V.bmp");
+  cleanSpriteEdges(&sILS_POINTER_V);
 
   sTURN_RATE.setPsram(true);
   sTURN_RATE.setColorDepth(colordepth);
   sTURN_RATE.createFromBmp(LittleFS, "/Slip.bmp");
+  cleanSpriteEdges(&sTURN_RATE);
 }
 
 void initRenderer() {
