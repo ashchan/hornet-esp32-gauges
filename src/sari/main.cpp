@@ -55,10 +55,10 @@ void loop() {
   lastMessage.bank += 2500;
   lastMessage.slipBall += 1000;
   lastMessage.rateOfTurn += 800;
-  //lastMessage.pointerHor += 1000;
-  //lastMessage.pointerVer += 1000;
-  //lastMessage.manPitchAdj += 200;
-  //lastMessage.attWarningFlag = 0;
+  lastMessage.pointerHor += 1000;
+  lastMessage.pointerVer += 1000;
+  lastMessage.manPitchAdj += 200;
+  lastMessage.attWarningFlag = 0;
   hasNewMessage = true;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;

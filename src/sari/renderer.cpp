@@ -22,55 +22,7 @@ LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
 LGFX_Sprite sWARNING_FLAG;           // WARNING FLAG
 LGFX_Sprite sBANK_INDICATOR;
 
-// Create data structure for display elements
-struct display_element {
-  int sprite_width;
-  int sprite_height;
-  int pos_x;
-  int pos_y;
-  int angel;
-  LGFX_Sprite* sprite;
-};
-
-// Enumeration of display elements
-enum Display_Name {
-  ADI_BEZEL,
-  ADI_BALL,
-  ADI_BEZEL_INNER,
-  ADI_BEZEL_MOST_INNER,
-  ADI_OFF_FLAG,
-  ADI_WINGS,
-  ADI_SLIP_BEZEL,
-  ILS_POINTER_H,
-  ILS_POINTER_V,
-  SLIP_BALL,
-  TURN_RATE,
-  WARNING_FLAG,
-  BANK_INDICATOR
-};
-
 uint8_t colordepth = 16;
-
-//################ Configure Display elelments ###############################
-int offset_x = 0;
-int offset_y = 0;
-
-display_element display_elements[]= {
-//{  w,  h,          px,             py, angel, sprite }
-  { 76, 38, offset_x - 1,    offset_y - 1,   0, &sADI_BEZEL }, //ADI_BEZEL
-  { 76, 38, offset_x + 240,  offset_y + 864, 0, &sADI_BALL }, //ADI_BALL
-  { 58, 18, offset_x - 1,    offset_y - 1,   0, &sADI_BEZEL_Inner }, //ADI_INNER BEZEL
-  { 58, 18, offset_x + 180,  offset_y + 31,  0, &sADI_BEZEL_MOST_INNER }, //ADI_BEZEL_MOST_INNER
-  {108, 38, offset_x + 430,  offset_y + 150, 0, &sADI_OFF_FLAG }, //ADI_OFF_FLAG
-  {108, 38, offset_x + 110,  offset_y + 232, 0, &sADI_WINGS }, //ADI_WINGS
-  { 58, 18, offset_x + 180,  offset_y + 96,  0, &sADI_SLIP_BEZEL }, //ADI_SLIP_BEZEL
-  { 58, 18, offset_x + 80,   offset_y + 100, 0, &sILS_POINTER_H }, //ILS_POINTER Horizontal
-  { 58, 18, offset_x + 100,  offset_y + 100, 0, &sILS_POINTER_V }, //ILS_POINTER Vertical
-  { 58, 18, offset_x + 240,  offset_y + 413, 0, &sADI_SLIP_BALL }, //SLIP BALL
-  { 58, 18, offset_x + 232,  offset_y + 447, 0, &sTURN_RATE }, //TURN_RATE
-  { 58, 18, offset_x + 180,  offset_y + 96,  0, &sWARNING_FLAG }, //WARNING_FLAG
-  { 58, 18, offset_x + 240,  offset_y + 100, 0, &sBANK_INDICATOR }, //sBANK_INDICATOR
-};
 
 //create sprites for digital display areas and text lables; Fonts loaded from LittleFS
 void create_display_elements() {
@@ -141,38 +93,41 @@ void initRenderer() {
 void render(SaiMessage message) {
   static bool flip = 0;
   flip = !flip;
+  LGFX_Sprite* mainSprite = &sMainSprite[flip];
 
-  display_elements[ADI_BALL].pos_y = map(message.pitch, 0, 65535, 180, 1580);
-  sADI_BALL.setPivot(sADI_BALL.width() / 2, display_elements[ADI_BALL].pos_y);
-  display_elements[ADI_BALL].angel = map(message.bank, 0, 65535, 0, 360);
-  display_elements[BANK_INDICATOR].angel = map(message.bank, 0, 65535, -60, 60);
+  int ballY = map(message.pitch, 0, 65535, 180, 1580);
+  sADI_BALL.setPivot(sADI_BALL.width() / 2, ballY);
+  int ballAngle = map(message.bank, 0, 65535, 0, 360);
+  int bankIndicatorAngle = map(message.bank, 0, 65535, -60, 60);
   //sBANK_INDICATOR.setPivot(sBANK_INDICATOR.width() / 2, 180);
-  display_elements[ADI_WINGS].pos_y = map(message.manPitchAdj, 0, 65535, 0, tft.height());
-  display_elements[ILS_POINTER_H].pos_y = map(message.pointerHor, 0, 65535, 50, 280);
-  display_elements[ILS_POINTER_V].pos_x = map(message.pointerVer, 0, 65535, 50, 280);
-  display_elements[SLIP_BALL].pos_x = map(message.slipBall, 0, 65535, 190, 265);
-  display_elements[TURN_RATE].pos_x = map(message.rateOfTurn, 0, 65535, 197, 263);
-  display_elements[ADI_OFF_FLAG].angel = map(message.attWarningFlag, 0, 65535, 0, 20);
+  int wingsY = map(message.manPitchAdj, 0, 65535, 0, tft.height());
+  int pointerHorY = map(message.pointerHor, 0, 65535, 50, 280);
+  int pointerVerX = map(message.pointerVer, 0, 65535, 50, 280);
+  int slipBallX = map(message.slipBall, 0, 65535, 190, 265);
+  int turnRateX = map(message.rateOfTurn, 0, 65535, 197, 263);
+  int adiOffFlagAngle = map(message.attWarningFlag, 0, 65535, 0, 20);
 
   tft.startWrite();
 
-  sADI_BALL.pushRotateZoom(&sMainSprite[flip], 240, 240, display_elements[ADI_BALL].angel, 1, 1, 0x00FF00U);
-  sADI_WINGS.pushSprite(&sMainSprite[flip], display_elements[ADI_WINGS].pos_x, display_elements[ADI_WINGS].pos_y, 0x00FF00U);
-  sILS_POINTER_H.pushSprite(&sMainSprite[flip], display_elements[ILS_POINTER_H].pos_x, display_elements[ILS_POINTER_H].pos_y, 0x00FF00U);
-  sILS_POINTER_V.pushSprite(&sMainSprite[flip], display_elements[ILS_POINTER_V].pos_x, display_elements[ILS_POINTER_V].pos_y, 0x00FF00U);
-  sADI_BEZEL_Inner.pushSprite(&sMainSprite[flip], display_elements[ADI_BEZEL_INNER].pos_x, display_elements[ADI_BEZEL_INNER].pos_y, 0x00FF00U);
-  sADI_SLIP_BALL.pushSprite(&sMainSprite[flip], display_elements[SLIP_BALL].pos_x, display_elements[SLIP_BALL].pos_y, 0x00FF00U);
-  sBANK_INDICATOR.pushRotateZoom(&sMainSprite[flip], 240, 240, display_elements[BANK_INDICATOR].angel, 1, 1, 0x00FF00U);
-  sADI_OFF_FLAG.pushRotateZoom(&sMainSprite[flip], display_elements[ADI_OFF_FLAG].pos_x, display_elements[ADI_OFF_FLAG].pos_y, display_elements[ADI_OFF_FLAG].angel, 1, 1, 0x00FF00U);
-  sADI_BEZEL.pushSprite(&sMainSprite[flip], display_elements[ADI_BEZEL].pos_x, display_elements[ADI_BEZEL].pos_y, 0x00FF00U);
-  sTURN_RATE.pushSprite(&sMainSprite[flip], display_elements[TURN_RATE].pos_x, display_elements[TURN_RATE].pos_y, 0x00FF00U);
+  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1, 0x00FF00U);
+  sADI_WINGS.pushSprite(mainSprite, 110, wingsY, 0x00FF00U);
+  sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, 0x00FF00U);
+  sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, 0x00FF00U);
+  // TODO: optimize bezel inner drawing?
+  sADI_BEZEL_Inner.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
+  sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 240, bankIndicatorAngle, 1, 1, 0x00FF00U);
+  sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
+  // TODO: optimize bezel drawing?
+  sADI_BEZEL.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, 0x00FF00U);
 
   static std::uint32_t sec, psec;
   static std::uint32_t fps = 0, frame_count = 0;
-  sMainSprite[flip].setCursor(100, 100);
-  sMainSprite[flip].setTextColor(TFT_WHITE);
-  sMainSprite[flip].printf("fps:%d", fps);
-  sMainSprite[flip].pushSprite(&tft, 0, 0);
+  mainSprite->setCursor(100, 100);
+  mainSprite->setTextColor(TFT_WHITE);
+  mainSprite->printf("fps:%d", fps);
+  mainSprite->pushSprite(&tft, 0, 0);
   tft.endWrite();
 
   // Calc FPS
