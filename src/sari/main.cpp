@@ -5,7 +5,6 @@
 #include "message.h"
 #include "renderer.h"
 
-
 static portMUX_TYPE msgMux = portMUX_INITIALIZER_UNLOCKED;
 static SaiMessage lastMessage{};
 uint16_t brightness = 0;
@@ -45,23 +44,21 @@ static void initEspNowClient() {
 
 void setup() {
   Serial.begin(115200);
-
-  initEspNowClient();
-
   initRenderer();
+  initEspNowClient();
 }
 
 void loop() {
   const uint32_t now = millis();
   static uint32_t lastUpdatedAt = 0;
-  lastMessage.pitch += 200;
-  lastMessage.bank += 200;
-  lastMessage.slipBall += 200;
-  lastMessage.rateOfTurn += 200;
-  lastMessage.pointerHor += 200;
-  lastMessage.pointerVer += 200;
-  lastMessage.manPitchAdj += 200;
-  //lastMessage.attWarningFlag = true;
+  lastMessage.pitch += 550;
+  lastMessage.bank += 2500;
+  lastMessage.slipBall += 1000;
+  lastMessage.rateOfTurn += 800;
+  //lastMessage.pointerHor += 1000;
+  //lastMessage.pointerVer += 1000;
+  //lastMessage.manPitchAdj += 200;
+  //lastMessage.attWarningFlag = 0;
   hasNewMessage = true;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;
