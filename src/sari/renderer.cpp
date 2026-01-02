@@ -10,38 +10,23 @@ LGFX tft;
 LGFX_Sprite sMainSprite[2];
 LGFX_Sprite sADI_BALL;               // ADI BALL
 LGFX_Sprite sADI_BEZEL_Static;       // ADI BEZEL
-LGFX_Sprite sADI_BEZEL_Inner;        // ADI BEZEL
 LGFX_Sprite sADI_OFF_FLAG;           // ADI OFF FLAG
-LGFX_Sprite sADI_BEZEL;              // ADI BEZEL
 LGFX_Sprite sADI_SLIP_BALL;          // ADI SLIP BALL
 LGFX_Sprite sADI_WINGS;              // ADI WINGS
 LGFX_Sprite sILS_POINTER_H;          // ILS HORIZONTAL POINTER
 LGFX_Sprite sILS_POINTER_V;          // ILS VERTICAL POINTER
 LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
 LGFX_Sprite sBANK_INDICATOR;
+LGFX_Sprite sBEZEL_CLIPPED;          // Clipped BEZEL to cover animated area
+
+constexpr int clipX = 82;
+constexpr int clipY = 75;
+constexpr int clipWidth = 316;
+constexpr int clipHeight = 390;
 
 uint8_t colordepth = 16;
 
 void cleanSpriteEdges(LGFX_Sprite* sprite) {
-  // Replace near-green pixels with pure green for proper transparency
-  for (int y = 0; y < sprite->height(); y++) {
-    for (int x = 0; x < sprite->width(); x++) {
-      uint32_t pixel = sprite->readPixel(x, y);
-      // Extract RGB components (RGB565 format)
-      uint8_t r5 = (pixel >> 11) & 0x1F;
-      uint8_t g6 = (pixel >> 5) & 0x3F;
-      uint8_t b5 = pixel & 0x1F;
-
-      // Check if pixel is close to green (0x00FF00 = R:0 G:63 B:0 in RGB565)
-      // Allow some tolerance for anti-aliased edges
-      if (g6 > 50 && r5 < 8 && b5 < 8) { // Close to green
-        sprite->drawPixel(x, y, 0x00FF00U); // Pure green
-      }
-    }
-  }
-}
-
-void cleanSpriteEdgesAggressive(LGFX_Sprite* sprite) {
   // More aggressive cleaning for problematic sprites like off flag
   for (int y = 0; y < sprite->height(); y++) {
     for (int x = 0; x < sprite->width(); x++) {
@@ -59,8 +44,7 @@ void cleanSpriteEdgesAggressive(LGFX_Sprite* sprite) {
   }
 }
 
-//create sprites for digital display areas and text lables; Fonts loaded from LittleFS
-void create_display_elements() {
+void createSprites() {
   for (int i = 0; i < 2; i++) {
     sMainSprite[i].setPsram(true);
     sMainSprite[i].setColorDepth(colordepth);
@@ -71,25 +55,15 @@ void create_display_elements() {
   sADI_BALL.createFromBmp(LittleFS, "/Ball_big.bmp");
   cleanSpriteEdges(&sADI_BALL);
 
-  sADI_BEZEL.setPsram(true);
-  sADI_BEZEL.setColorDepth(colordepth);
-  sADI_BEZEL.createFromBmp(LittleFS, "/Bazel_outer_big.bmp");
-  cleanSpriteEdges(&sADI_BEZEL);
-
-  sADI_BEZEL_Inner.setPsram(true);
-  sADI_BEZEL_Inner.setColorDepth(colordepth);
-  sADI_BEZEL_Inner.createFromBmp(LittleFS, "/Bazel_inner_big.bmp");
-  cleanSpriteEdges(&sADI_BEZEL_Inner);
-
   sADI_BEZEL_Static.setPsram(true);
   sADI_BEZEL_Static.setColorDepth(colordepth);
-  sADI_BEZEL_Static.createFromBmp(LittleFS, "/Bazel_static_big.bmp");
+  sADI_BEZEL_Static.createFromBmp(LittleFS, "/Bezel_static_big.bmp");
   cleanSpriteEdges(&sADI_BEZEL_Static);
 
   sADI_OFF_FLAG.setPsram(true);
   sADI_OFF_FLAG.setColorDepth(colordepth);
   sADI_OFF_FLAG.createFromBmp(LittleFS, "/WarnFlag_big.bmp");
-  cleanSpriteEdgesAggressive(&sADI_OFF_FLAG);
+  cleanSpriteEdges(&sADI_OFF_FLAG);
 
   sADI_WINGS.setPsram(true);
   sADI_WINGS.setColorDepth(colordepth);
@@ -120,6 +94,12 @@ void create_display_elements() {
   sTURN_RATE.setColorDepth(colordepth);
   sTURN_RATE.createFromBmp(LittleFS, "/Slip.bmp");
   cleanSpriteEdges(&sTURN_RATE);
+
+  sBEZEL_CLIPPED.setPsram(true);
+  sBEZEL_CLIPPED.setColorDepth(colordepth);
+  sBEZEL_CLIPPED.createSprite(clipWidth, clipHeight);
+  sADI_BEZEL_Static.pushSprite(&sBEZEL_CLIPPED, -clipX, -clipY);
+  cleanSpriteEdges(&sBEZEL_CLIPPED);
 }
 
 void initRenderer() {
@@ -133,8 +113,11 @@ void initRenderer() {
   tft.fillScreen(TFT_BLACK);
 
   LittleFS.begin(true);
-  create_display_elements();
+  createSprites();
+  // Draw the full bezel. The outer edges are not animated.
+  sADI_BEZEL_Static.pushSprite(&tft, 0, 0);
 }
+
 
 void render(SaiMessage message) {
   static bool flip = 0;
@@ -155,16 +138,15 @@ void render(SaiMessage message) {
 
   tft.startWrite();
 
-  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1);//, 0x00FF00U);
+  tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
+
+  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1);
   sADI_WINGS.pushSprite(mainSprite, 110, wingsY, 0x00FF00U);
   sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, 0x00FF00U);
   sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, 0x00FF00U);
-  // TODO: optimize bezel inner drawing?
-  //sADI_BEZEL_Inner.pushSprite(mainSprite, -1, -1, 0x00FF00U);
   sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 240, bankIndicatorAngle, 1, 1, 0x00FF00U);
-  // TODO: optimize bezel drawing?
-  //sADI_BEZEL.pushSprite(mainSprite, -1, -1, 0x00FF00U);
-  sADI_BEZEL_Static.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  sBEZEL_CLIPPED.pushSprite(mainSprite, clipX, clipY, 0x00FF00U);
+  // TODO: off flag is outside of clip rect. Need to handle that.
   sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
   sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
   sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, 0x00FF00U);
@@ -175,6 +157,7 @@ void render(SaiMessage message) {
   mainSprite->setTextColor(TFT_WHITE);
   mainSprite->printf("fps:%d", fps);
   mainSprite->pushSprite(&tft, 0, 0);
+   tft.clearClipRect();
   tft.endWrite();
 
   // Calc FPS
