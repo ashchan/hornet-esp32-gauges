@@ -44,6 +44,89 @@ void cleanSpriteEdges(LGFX_Sprite* sprite) {
   }
 }
 
+struct Span { uint16_t x; uint16_t len; };
+
+static uint16_t* spanOffsets = nullptr;
+static uint16_t* spanCounts  = nullptr;
+static Span* spans           = nullptr;
+static uint32_t spanTotal    = 0;
+
+void buildOpaqueSpans(LGFX_Sprite& patch, uint16_t keyColor) {
+  const int W = patch.width();
+  const int H = patch.height();
+  uint16_t* buf = (uint16_t*)patch.getBuffer();
+
+  // Allocate per-row metadata
+  spanOffsets = (uint16_t*)ps_malloc(sizeof(uint16_t) * H);
+  spanCounts  = (uint16_t*)ps_malloc(sizeof(uint16_t) * H);
+
+  // First pass: count total spans so we can allocate once
+  spanTotal = 0;
+  for (int y = 0; y < H; ++y) {
+    uint16_t count = 0;
+    uint16_t* row = buf + y * W;
+
+    bool inRun = false;
+    for (int x = 0; x < W; ++x) {
+      bool opaque = (row[x] != keyColor);
+      if (opaque && !inRun) { inRun = true; count++; }
+      else if (!opaque && inRun) { inRun = false; }
+    }
+    spanCounts[y] = count;
+    spanTotal += count;
+  }
+
+  // Allocate span storage in PSRAM
+  spans = (Span*)ps_malloc(sizeof(Span) * spanTotal);
+
+  // Second pass: fill spans + offsets
+  uint32_t idx = 0;
+  for (int y = 0; y < H; ++y) {
+    spanOffsets[y] = idx;
+    uint16_t* row = buf + y * W;
+
+    bool inRun = false;
+    int startX = 0;
+
+    for (int x = 0; x < W; ++x) {
+      bool opaque = (row[x] != keyColor);
+
+      if (opaque && !inRun) {
+        inRun = true;
+        startX = x;
+      }
+      else if (!opaque && inRun) {
+        inRun = false;
+        spans[idx++] = { (uint16_t)startX, (uint16_t)(x - startX) };
+      }
+    }
+
+    // Close run at end of row
+    if (inRun) {
+      spans[idx++] = { (uint16_t)startX, (uint16_t)(W - startX) };
+    }
+  }
+}
+
+void pushWithOpaqueSpans(LGFX_Sprite& target, LGFX_Sprite& patch, int dstX, int dstY) {
+  const int W = patch.width();
+  const int H = patch.height();
+  uint16_t* buf = (uint16_t*)patch.getBuffer();
+
+  for (int y = 0; y < H; ++y) {
+    uint16_t count = spanCounts[y];
+    if (!count) continue;
+
+    uint16_t* row = buf + y * W;
+    uint32_t base = spanOffsets[y];
+
+    for (int i = 0; i < count; ++i) {
+      const Span& s = spans[base + i];
+      target.pushImage(dstX + s.x, dstY + y, s.len, 1, row + s.x);
+    }
+  }
+}
+
 void createSprites() {
   for (int i = 0; i < 2; i++) {
     sMainSprite[i].setPsram(true);
@@ -99,7 +182,13 @@ void createSprites() {
   sBEZEL_CLIPPED.setColorDepth(colordepth);
   sBEZEL_CLIPPED.createSprite(clipWidth, clipHeight);
   sADI_BEZEL_Static.pushSprite(&sBEZEL_CLIPPED, -clipX, -clipY);
-  cleanSpriteEdges(&sBEZEL_CLIPPED);
+  uint16_t* buf = (uint16_t*)sBEZEL_CLIPPED.getBuffer();
+  int W = sBEZEL_CLIPPED.width();
+  int H = sBEZEL_CLIPPED.height();
+  // sample center pixel
+  uint16_t keyColor = buf[(H/2) * W + (W/2)];
+  buildOpaqueSpans(sBEZEL_CLIPPED, keyColor);
+  //cleanSpriteEdges(&sBEZEL_CLIPPED);
 }
 
 void initRenderer() {
@@ -114,10 +203,8 @@ void initRenderer() {
 
   LittleFS.begin(true);
   createSprites();
-  // Draw the full bezel. The outer edges are not animated.
   sADI_BEZEL_Static.pushSprite(&tft, 0, 0);
 }
-
 
 void render(SaiMessage message) {
   static bool flip = 0;
@@ -138,6 +225,13 @@ void render(SaiMessage message) {
 
   tft.startWrite();
 
+  static bool needsFullRedraw = true;
+  if (needsFullRedraw) {
+    // Draw the full bezel. The outer edges are not animated.
+    sADI_BEZEL_Static.pushSprite(&tft, 0, 0);
+    needsFullRedraw = false;
+  }
+
   tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
 
   sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1);
@@ -145,7 +239,7 @@ void render(SaiMessage message) {
   sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, 0x00FF00U);
   sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, 0x00FF00U);
   sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 240, bankIndicatorAngle, 1, 1, 0x00FF00U);
-  sBEZEL_CLIPPED.pushSprite(mainSprite, clipX, clipY, 0x00FF00U);
+  pushWithOpaqueSpans(*mainSprite, sBEZEL_CLIPPED, clipX, clipY);
   // TODO: off flag is outside of clip rect. Need to handle that.
   sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
   sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
