@@ -9,17 +9,15 @@ LGFX tft;
 // Create sprites
 LGFX_Sprite sMainSprite[2];
 LGFX_Sprite sADI_BALL;               // ADI BALL
-LGFX_Sprite sADI_BEZEL_MOST_INNER;   // ADI INNER RING
+LGFX_Sprite sADI_BEZEL_Static;       // ADI BEZEL
 LGFX_Sprite sADI_BEZEL_Inner;        // ADI BEZEL
 LGFX_Sprite sADI_OFF_FLAG;           // ADI OFF FLAG
 LGFX_Sprite sADI_BEZEL;              // ADI BEZEL
-LGFX_Sprite sADI_SLIP_BEZEL;         // ADI SLIP BEZEL
 LGFX_Sprite sADI_SLIP_BALL;          // ADI SLIP BALL
 LGFX_Sprite sADI_WINGS;              // ADI WINGS
 LGFX_Sprite sILS_POINTER_H;          // ILS HORIZONTAL POINTER
 LGFX_Sprite sILS_POINTER_V;          // ILS VERTICAL POINTER
 LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
-LGFX_Sprite sWARNING_FLAG;           // WARNING FLAG
 LGFX_Sprite sBANK_INDICATOR;
 
 uint8_t colordepth = 16;
@@ -43,9 +41,9 @@ void create_display_elements() {
   sADI_BEZEL_Inner.setColorDepth(colordepth);
   sADI_BEZEL_Inner.createFromBmp(LittleFS, "/Bazel_inner_big.bmp");
 
-  sADI_BEZEL_MOST_INNER.setPsram(true);
-  sADI_BEZEL_MOST_INNER.setColorDepth(colordepth);
-  sADI_BEZEL_MOST_INNER.createFromBmp(LittleFS, "/Ring_big.bmp");
+  sADI_BEZEL_Static.setPsram(true);
+  sADI_BEZEL_Static.setColorDepth(colordepth);
+  sADI_BEZEL_Static.createFromBmp(LittleFS, "/Bazel_static_big.bmp");
 
   sADI_OFF_FLAG.setPsram(true);
   sADI_OFF_FLAG.setColorDepth(colordepth);
@@ -109,17 +107,18 @@ void render(SaiMessage message) {
 
   tft.startWrite();
 
-  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1, 0x00FF00U);
+  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1);//, 0x00FF00U);
   sADI_WINGS.pushSprite(mainSprite, 110, wingsY, 0x00FF00U);
   sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, 0x00FF00U);
   sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, 0x00FF00U);
   // TODO: optimize bezel inner drawing?
-  sADI_BEZEL_Inner.pushSprite(mainSprite, -1, -1, 0x00FF00U);
-  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
+  //sADI_BEZEL_Inner.pushSprite(mainSprite, -1, -1, 0x00FF00U);
   sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 240, bankIndicatorAngle, 1, 1, 0x00FF00U);
-  sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
   // TODO: optimize bezel drawing?
-  sADI_BEZEL.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  //sADI_BEZEL.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  sADI_BEZEL_Static.pushSprite(mainSprite, -1, -1, 0x00FF00U);
+  sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
+  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
   sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, 0x00FF00U);
 
   static std::uint32_t sec, psec;
