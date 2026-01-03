@@ -53,6 +53,14 @@ void setup() {
 
 void loop() {
   const uint32_t now = millis();
+
+  // DEBUG purpose only
+  hasNewMessage = true;
+  //lastMessage.attWarningFlag += 400;
+  //lastMessage.pointerHor += 400;
+  //lastMessage.pointerVer += 400;
+  lastMessage.bank += 400;
+
   static uint32_t lastUpdatedAt = 0;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
     hasNewMessage = false;

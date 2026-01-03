@@ -19,12 +19,14 @@ LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
 LGFX_Sprite sBANK_INDICATOR;
 LGFX_Sprite sBEZEL_CLIPPED;          // Clipped BEZEL to cover animated area
 
+// Parameters for the main clipped area - Bezel
 constexpr int clipX = 82;
-constexpr int clipY = 75;
+constexpr int clipY = 74;
 constexpr int clipWidth = 316;
 constexpr int clipHeight = 390;
 
 uint8_t colordepth = 16;
+uint16_t transparentColor = 0x00FF00U; // Pure green
 
 void cleanSpriteEdges(LGFX_Sprite* sprite) {
   // More aggressive cleaning for problematic sprites like off flag
@@ -38,7 +40,7 @@ void cleanSpriteEdges(LGFX_Sprite* sprite) {
 
       // Much looser tolerance - catch any pixel with significant green
       if (g6 > 30 && r5 < 12 && b5 < 12) { // Very loose green detection
-        sprite->drawPixel(x, y, 0x00FF00U); // Pure green
+        sprite->drawPixel(x, y, transparentColor);
       }
     }
   }
@@ -180,13 +182,11 @@ void createSprites() {
 
   sBEZEL_CLIPPED.setPsram(true);
   sBEZEL_CLIPPED.setColorDepth(colordepth);
-  sBEZEL_CLIPPED.createSprite(clipWidth, clipHeight);
+  sBEZEL_CLIPPED.createSprite(clipWidth + 1, clipHeight + 1);
   sADI_BEZEL_Static.pushSprite(&sBEZEL_CLIPPED, -clipX, -clipY);
   uint16_t* buf = (uint16_t*)sBEZEL_CLIPPED.getBuffer();
-  int W = sBEZEL_CLIPPED.width();
-  int H = sBEZEL_CLIPPED.height();
-  // sample center pixel
-  uint16_t keyColor = buf[(H/2) * W + (W/2)];
+  // sample center pixel, which should be the transparent color
+  uint16_t keyColor = buf[((clipHeight + 1) / 2) * (clipWidth + 1) + ((clipWidth + 1) / 2)];
   buildOpaqueSpans(sBEZEL_CLIPPED, keyColor);
 }
 
@@ -202,10 +202,16 @@ void initRenderer() {
 
   LittleFS.begin(true);
   createSprites();
-  sADI_BEZEL_Static.pushSprite(&tft, 0, 0);
+
+  // Draw the full bezel. The outer edges are not animated.
+  sADI_BEZEL_Static.pushSprite(&tft, -1, -1, transparentColor);
+
+  sBANK_INDICATOR.setPivot(sBANK_INDICATOR.width() / 2, 160);
+  sADI_OFF_FLAG.setPivot(8, 10);
 }
 
 void render(SaiMessage message) {
+  static bool needsFullRedraw = false;
   static bool flip = 0;
   flip = !flip;
   LGFX_Sprite* mainSprite = &sMainSprite[flip];
@@ -213,36 +219,30 @@ void render(SaiMessage message) {
   int ballY = map(message.pitch, 0, 65535, 180, 1580);
   sADI_BALL.setPivot(sADI_BALL.width() / 2, ballY);
   int ballAngle = map(message.bank, 0, 65534, -180, 180); // 65534: take of the initial round (we use 65535 / 2 as default value)
-  int bankIndicatorAngle = map(message.bank, 0, 65535, -60, 60);
-  //sBANK_INDICATOR.setPivot(sBANK_INDICATOR.width() / 2, 180);
+  int bankIndicatorAngle = map(message.bank, 0, 65535, -180, 180);
   int wingsY = map(message.manPitchAdj, 0, 65535, 0, tft.height());
-  int pointerHorY = map(message.pointerHor, 0, 65535, 50, 280);
-  int pointerVerX = map(message.pointerVer, 0, 65535, 50, 280);
+  int pointerHorY = map(message.pointerHor, 0, 65535, 120, 360);
+  int pointerVerX = map(message.pointerVer, 0, 65535, 122, 350);
   int slipBallX = map(message.slipBall, 0, 65535, 190, 265);
-  int turnRateX = map(message.rateOfTurn, 0, 65535, 197, 263);
+  int turnRateX = map(message.rateOfTurn, 0, 65535, 197, 262);
+  static int prevAdiOffFlagAngle = -1;
   int adiOffFlagAngle = map(message.attWarningFlag, 0, 65535, 0, 20);
 
   tft.startWrite();
-
-  static bool needsFullRedraw = true;
-  if (needsFullRedraw) {
-    // Draw the full bezel. The outer edges are not animated.
-    sADI_BEZEL_Static.pushSprite(&tft, 0, 0);
-    needsFullRedraw = false;
-  }
-
   tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
 
-  sADI_BALL.pushRotateZoom(mainSprite, 240, 240, ballAngle, 1, 1);
-  sADI_WINGS.pushSprite(mainSprite, 110, wingsY, 0x00FF00U);
-  sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, 0x00FF00U);
-  sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, 0x00FF00U);
-  sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 240, bankIndicatorAngle, 1, 1, 0x00FF00U);
-  pushWithOpaqueSpans(*mainSprite, sBEZEL_CLIPPED, clipX, clipY);
+  sADI_BALL.pushRotateZoom(mainSprite, 240, 230, ballAngle, 1, 1);
+  sADI_WINGS.pushSprite(mainSprite, 110, wingsY, transparentColor);
+  sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, transparentColor);
+  sILS_POINTER_V.pushSprite(mainSprite, pointerVerX, 100, transparentColor);
+  pushWithOpaqueSpans(*mainSprite, sBEZEL_CLIPPED, clipX - 1, clipY - 1);
+  sBANK_INDICATOR.pushRotateZoom(mainSprite, 240, 233, bankIndicatorAngle, 1, 1, transparentColor);
+
   // TODO: off flag is outside of clip rect. Need to handle that.
-  sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, 0x00FF00U);
-  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, 0x00FF00U);
-  sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, 0x00FF00U);
+  // sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, transparentColor);
+
+  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, transparentColor);
+  sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, transparentColor);
 
   static std::uint32_t sec, psec;
   static std::uint32_t fps = 0, frame_count = 0;
@@ -250,7 +250,8 @@ void render(SaiMessage message) {
   mainSprite->setTextColor(TFT_WHITE);
   mainSprite->printf("fps:%d", fps);
   mainSprite->pushSprite(&tft, 0, 0);
-   tft.clearClipRect();
+
+  tft.clearClipRect();
   tft.endWrite();
 
   // Calc FPS

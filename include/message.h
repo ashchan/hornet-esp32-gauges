@@ -132,8 +132,8 @@ struct __attribute__((packed)) SaiMessage {
   uint16_t manPitchAdj = MID_VALUE;
   uint16_t pitch = MID_VALUE;
   uint16_t attWarningFlag = MAX_VALUE;
-  uint16_t pointerHor;
-  uint16_t pointerVer;
+  uint16_t pointerHor = MID_VALUE;
+  uint16_t pointerVer = MID_VALUE;
 };
 #pragma pack(pop)
 
