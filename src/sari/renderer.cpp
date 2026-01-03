@@ -18,12 +18,19 @@ LGFX_Sprite sILS_POINTER_V;          // ILS VERTICAL POINTER
 LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
 LGFX_Sprite sBANK_INDICATOR;
 LGFX_Sprite sBEZEL_CLIPPED;          // Clipped BEZEL to cover animated area
+LGFX_Sprite sBOTTOM_CLIPPED;      // Clipped BEZEL to cover animated area
 
 // Parameters for the main clipped area - Bezel
 constexpr int clipX = 82;
 constexpr int clipY = 74;
 constexpr int clipWidth = 316;
-constexpr int clipHeight = 390;
+constexpr int clipHeight = 316;
+
+// Parameters for the bottom clipped area - slip ball and rate of turn
+constexpr int clipBottomX = 190;
+constexpr int clipBottomY = 412;
+constexpr int clipBottomWidth = 100;
+constexpr int clipBottomHeight = 54;
 
 uint8_t colordepth = 16;
 uint16_t transparentColor = 0x00FF00U; // Pure green
@@ -188,6 +195,11 @@ void createSprites() {
   // sample center pixel, which should be the transparent color
   uint16_t keyColor = buf[((clipHeight + 1) / 2) * (clipWidth + 1) + ((clipWidth + 1) / 2)];
   buildOpaqueSpans(sBEZEL_CLIPPED, keyColor);
+
+  sBOTTOM_CLIPPED.setPsram(true);
+  sBOTTOM_CLIPPED.setColorDepth(colordepth);
+  sBOTTOM_CLIPPED.createSprite(clipBottomWidth, clipBottomHeight);
+  sADI_BEZEL_Static.pushSprite(&sBOTTOM_CLIPPED, -clipBottomX, -clipBottomY);
 }
 
 void initRenderer() {
@@ -229,8 +241,14 @@ void render(SaiMessage message) {
   int adiOffFlagAngle = map(message.attWarningFlag, 0, 65535, 0, 20);
 
   tft.startWrite();
-  tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
 
+  tft.setClipRect(clipBottomX, clipBottomY, clipBottomWidth, clipBottomHeight);
+  sBOTTOM_CLIPPED.pushSprite(mainSprite, clipBottomX, clipBottomY, transparentColor);
+  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, transparentColor);
+  sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, transparentColor);
+  mainSprite->pushSprite(&tft, 0, 0);
+
+  tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
   sADI_BALL.pushRotateZoom(mainSprite, 240, 230, ballAngle, 1, 1);
   sADI_WINGS.pushSprite(mainSprite, 110, wingsY, transparentColor);
   sILS_POINTER_H.pushSprite(mainSprite, 80, pointerHorY, transparentColor);
@@ -241,9 +259,6 @@ void render(SaiMessage message) {
   // TODO: off flag is outside of clip rect. Need to handle that.
   // sADI_OFF_FLAG.pushRotateZoom(mainSprite, 430, 150, adiOffFlagAngle, 1, 1, transparentColor);
 
-  sADI_SLIP_BALL.pushSprite(mainSprite, slipBallX, 413, transparentColor);
-  sTURN_RATE.pushSprite(mainSprite, turnRateX, 447, transparentColor);
-
   static std::uint32_t sec, psec;
   static std::uint32_t fps = 0, frame_count = 0;
   mainSprite->setCursor(100, 100);
@@ -252,6 +267,7 @@ void render(SaiMessage message) {
   mainSprite->pushSprite(&tft, 0, 0);
 
   tft.clearClipRect();
+
   tft.endWrite();
 
   // Calc FPS

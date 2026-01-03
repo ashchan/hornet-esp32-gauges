@@ -59,7 +59,9 @@ void loop() {
   //lastMessage.attWarningFlag += 400;
   //lastMessage.pointerHor += 400;
   //lastMessage.pointerVer += 400;
-  lastMessage.bank += 400;
+  lastMessage.bank += 1200;
+  lastMessage.slipBall += 1000;
+  lastMessage.rateOfTurn += 1000;
 
   static uint32_t lastUpdatedAt = 0;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
