@@ -188,7 +188,6 @@ void createSprites() {
   // sample center pixel
   uint16_t keyColor = buf[(H/2) * W + (W/2)];
   buildOpaqueSpans(sBEZEL_CLIPPED, keyColor);
-  //cleanSpriteEdges(&sBEZEL_CLIPPED);
 }
 
 void initRenderer() {
@@ -213,7 +212,7 @@ void render(SaiMessage message) {
 
   int ballY = map(message.pitch, 0, 65535, 180, 1580);
   sADI_BALL.setPivot(sADI_BALL.width() / 2, ballY);
-  int ballAngle = map(message.bank, 0, 65535, 0, 360);
+  int ballAngle = map(message.bank, 0, 65534, -180, 180); // 65534: take of the initial round (we use 65535 / 2 as default value)
   int bankIndicatorAngle = map(message.bank, 0, 65535, -60, 60);
   //sBANK_INDICATOR.setPivot(sBANK_INDICATOR.width() / 2, 180);
   int wingsY = map(message.manPitchAdj, 0, 65535, 0, tft.height());
