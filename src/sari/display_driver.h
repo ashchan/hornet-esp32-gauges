@@ -74,7 +74,7 @@ static void panel_power_and_reset() {
   tcaSet(EXIO_RST, 0);
   delay(20);
   tcaSet(EXIO_RST, 1);
-  delay(120);
+  delay(20);
 }
 
 static void st7701_init_rgb565() {
@@ -145,7 +145,7 @@ static void st7701_init_rgb565() {
   stCmd(0xE8);
   stDat(0x0C); stDat(0xF4); stDat(0x30); stDat(0xF0);
   stDat(0x0E); stDat(0xF6); stDat(0x30); stDat(0xF0);
- stDat(0x08); stDat(0xF0); stDat(0x30); stDat(0xF0);
+  stDat(0x08); stDat(0xF0); stDat(0x30); stDat(0xF0);
   stDat(0x0A); stDat(0xF2); stDat(0x30); stDat(0xF0);
 
   stCmd(0xE9); stDat(0x36); stDat(0x01);
@@ -172,7 +172,7 @@ static void st7701_init_rgb565() {
   stDat(0x08);
 
   stCmd(0x11);
-  delay(120);
+  delay(20);
 
   stCmd(0x3A);
   stDat(0x66);
