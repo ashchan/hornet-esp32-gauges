@@ -261,7 +261,7 @@ void render(SaiMessage message) {
 
   const int slipBallX = map(message.slipBall, 0, 65535, 190, 265), slipBallY = 413;
   const int turnRateX = map(message.rateOfTurn, 0, 65535, 200, 264), turnRateY = 447;
-  const int ballOffset = map(message.pitch, 0, 65535, 1037, 0) + 80;
+  const int ballOffset = map(message.pitch, 0, 65535, 930, 0);
   // 65534: take of the initial round (we use 65535 / 2 as default value)
   const int ballAngle = map(message.bank, 0, 65534, -180, 180);
   const int ballX = 240, ballY = 240;
