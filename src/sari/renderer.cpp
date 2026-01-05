@@ -11,16 +11,16 @@ LGFX_Sprite sMainSprite;
 LGFX_Sprite sADI_BALL;               // ADI BALL
 LGFX_Sprite sADI_BEZEL_STATIC;       // ADI BEZEL STATIC
 LGFX_Sprite sADI_BEZEL_OUTER;        // ADI BEZEL OUTER
-LGFX_Sprite sADI_BEZEL_INNER;        // ADI BEZEL INNER
 LGFX_Sprite sADI_OFF_FLAG;           // ADI OFF FLAG
 LGFX_Sprite sADI_SLIP_BALL;          // ADI SLIP BALL
 LGFX_Sprite sADI_WINGS;              // ADI WINGS
 LGFX_Sprite sILS_POINTER_H;          // ILS HORIZONTAL POINTER
 LGFX_Sprite sILS_POINTER_V;          // ILS VERTICAL POINTER
 LGFX_Sprite sTURN_RATE;              // TURN RATE INDICATOR
-LGFX_Sprite sBANK_INDICATOR;
+LGFX_Sprite sBANK_INDICATOR;         // BANK INDICATOR
 LGFX_Sprite sBEZEL_CLIPPED;          // Clipped BEZEL to cover animated area
-LGFX_Sprite sBOTTOM_CLIPPED;         // Clipped BEZEL to cover animated area
+LGFX_Sprite sBOTTOM_CLIPPED;         // Clipped bottom area for slip ball and rate of turn mark
+LGFX_Sprite sOFF_FLAG_CLIPPED;       // Clipped right area to cover off flag
 
 const uint8_t colorDepth = 16;
 const uint16_t transparentColor = 0x00FF00U; // Pure green
@@ -132,10 +132,16 @@ constexpr int clipWidth = 316;
 constexpr int clipHeight = 316;
 
 // Parameters for the bottom clipped area - slip ball and rate of turn
-constexpr int clipBottomX = 190;
+constexpr int clipBottomX = 180;
 constexpr int clipBottomY = 412;
-constexpr int clipBottomWidth = 100;
+constexpr int clipBottomWidth = 120;
 constexpr int clipBottomHeight = 54;
+
+// Parameters for the right clipped area - off flag
+constexpr int clipOffFlagX = 420;
+constexpr int clipOffFlagY = 110;
+constexpr int clipOffFlagWidth = 60;
+constexpr int clipOffFlagHeight = 170;
 
 void createSprites() {
   sMainSprite.setPsram(true);
@@ -155,11 +161,6 @@ void createSprites() {
   sADI_BEZEL_OUTER.setColorDepth(colorDepth);
   sADI_BEZEL_OUTER.createFromBmp(LittleFS, "/Bezel_outer_big.bmp");
   cleanSpriteEdges(&sADI_BEZEL_OUTER);
-
-  sADI_BEZEL_INNER.setPsram(true);
-  sADI_BEZEL_INNER.setColorDepth(colorDepth);
-  sADI_BEZEL_INNER.createFromBmp(LittleFS, "/Bezel_inner_big.bmp");
-  cleanSpriteEdges(&sADI_BEZEL_INNER);
 
   sADI_OFF_FLAG.setPsram(true);
   sADI_OFF_FLAG.setColorDepth(colorDepth);
@@ -200,6 +201,7 @@ void createSprites() {
   sBEZEL_CLIPPED.setColorDepth(colorDepth);
   sBEZEL_CLIPPED.createSprite(clipWidth + 1, clipHeight + 1);
   sADI_BEZEL_STATIC.pushSprite(&sBEZEL_CLIPPED, -clipX, -clipY);
+  // Scan and store the central transparent region for efficient clipping
   uint16_t* buf = (uint16_t*)sBEZEL_CLIPPED.getBuffer();
   // sample center pixel, which should be the transparent color
   uint16_t keyColor = buf[((clipHeight + 1) / 2) * (clipWidth + 1) + ((clipWidth + 1) / 2)];
@@ -209,6 +211,11 @@ void createSprites() {
   sBOTTOM_CLIPPED.setColorDepth(colorDepth);
   sBOTTOM_CLIPPED.createSprite(clipBottomWidth, clipBottomHeight);
   sADI_BEZEL_STATIC.pushSprite(&sBOTTOM_CLIPPED, -clipBottomX, -clipBottomY);
+
+  sOFF_FLAG_CLIPPED.setPsram(true);
+  sOFF_FLAG_CLIPPED.setColorDepth(colorDepth);
+  sOFF_FLAG_CLIPPED.createSprite(clipOffFlagWidth, clipOffFlagHeight);
+  sADI_BEZEL_OUTER.pushSprite(&sOFF_FLAG_CLIPPED, -clipOffFlagX, -clipOffFlagY);
 }
 
 void initRenderer() {
@@ -223,9 +230,6 @@ void initRenderer() {
 
   LittleFS.begin(true);
   createSprites();
-
-  // Draw the full bezel. The outer edges are not animated.
-  sADI_BEZEL_STATIC.pushSprite(&tft, -1, -1, transparentColor);
 
   sBANK_INDICATOR.setPivot(sBANK_INDICATOR.width() / 2, 160);
   sADI_OFF_FLAG.setPivot(8, 10);
@@ -257,8 +261,6 @@ public:
 };
 
 void render(SaiMessage message) {
-  static bool needsFullRedraw = true;
-
   const int slipBallX = map(message.slipBall, 0, 65535, 190, 265), slipBallY = 413;
   const int turnRateX = map(message.rateOfTurn, 0, 65535, 200, 264), turnRateY = 447;
   const int ballOffset = map(message.pitch, 0, 65535, 930, 0);
@@ -270,10 +272,11 @@ void render(SaiMessage message) {
   const int pointerVerX = map(message.pointerVer, 0, 65535, 15, 420), pointerVerY = 70;
   const int bankIndicatorX = 240, bankIndicatorY = 233;
   const int bankIndicatorAngle = map(message.bank, 0, 65535, -180, 180);
+  const int offFlagX = 432, offFlagY = 120;
 
+  bool needsFullRedraw = false;
   static int prevAdiOffFlagAngle = -1;
   const int adiOffFlagAngle = message.attWarningFlag == 0 ? 0 : 30;
-
   bool needsRedrawOffFlag = prevAdiOffFlagAngle != adiOffFlagAngle;
   prevAdiOffFlagAngle = adiOffFlagAngle;
   if (needsRedrawOffFlag) {
@@ -282,20 +285,16 @@ void render(SaiMessage message) {
 
   tft.startWrite();
 
-  tft.setClipRect(clipBottomX, clipBottomY, clipBottomWidth, clipBottomHeight);
-  sBOTTOM_CLIPPED.pushSprite(&sMainSprite, clipBottomX, clipBottomY, transparentColor);
-  sADI_SLIP_BALL.pushSprite(&sMainSprite, slipBallX, slipBallY, transparentColor);
-  sTURN_RATE.pushSprite(&sMainSprite, turnRateX, turnRateY, transparentColor);
-  sMainSprite.pushSprite(&tft, 0, 0);
-
-  tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
+  sMainSprite.setClipRect(clipX, clipY, clipWidth, clipHeight);
   sADI_BALL.setPivot(sADI_BALL.width() / 2, ballOffset);
   sADI_BALL.pushRotateZoom(&sMainSprite, ballX, ballY, ballAngle, 1, 1);
 
   if (needsFullRedraw) {
-    sADI_BEZEL_INNER.pushSprite(&tft, -1, -1, transparentColor);
+    sMainSprite.clearClipRect();
+    sADI_BEZEL_STATIC.pushSprite(&sMainSprite, -1, -1, transparentColor);
+  } else {
+    pushWithOpaqueSpans(sMainSprite, sBEZEL_CLIPPED, clipX - 1, clipY - 1);
   }
-  pushWithOpaqueSpans(sMainSprite, sBEZEL_CLIPPED, clipX - 1, clipY - 1);
 
   sADI_WINGS.pushSprite(&sMainSprite, wingsX, wingsY, transparentColor);
   sILS_POINTER_H.pushSprite(&sMainSprite, pointerHorX, pointerHorY, transparentColor);
@@ -305,16 +304,24 @@ void render(SaiMessage message) {
   static FPSCounter fpsCounter;
   fpsCounter.show(sMainSprite, 100, 100);
 
-  sMainSprite.pushSprite(&tft, 0, 0);
-  tft.clearClipRect();
+  sMainSprite.setClipRect(clipBottomX, clipBottomY, clipBottomWidth, clipBottomHeight);
+  sBOTTOM_CLIPPED.pushSprite(&sMainSprite, clipBottomX, clipBottomY, transparentColor);
+  sADI_SLIP_BALL.pushSprite(&sMainSprite, slipBallX, slipBallY, transparentColor);
+  sTURN_RATE.pushSprite(&sMainSprite, turnRateX, turnRateY, transparentColor);
 
-  //sADI_OFF_FLAG.pushRotateZoom(&tft, 420, 120, adiOffFlagAngle, 1, 1, transparentColor);
-  //if (needsFullRedraw) {
-  //  sADI_BEZEL_OUTER.pushSprite(&tft, -1, -1, transparentColor);
-  //}
+  sMainSprite.clearClipRect();
+  sADI_OFF_FLAG.pushRotateZoom(&sMainSprite, offFlagX, offFlagY, adiOffFlagAngle, 1, 1, transparentColor);
+  sMainSprite.setClipRect(clipOffFlagX, clipOffFlagY, clipOffFlagWidth, clipOffFlagHeight);
+  sOFF_FLAG_CLIPPED.pushSprite(&sMainSprite, clipOffFlagX, clipOffFlagY, transparentColor);
+
+  sMainSprite.clearClipRect();
+  if (needsFullRedraw) {
+    sADI_BEZEL_OUTER.pushSprite(&sMainSprite, -1, -1, transparentColor);
+  }
+
+  sMainSprite.pushSprite(&tft, 0, 0);
 
   tft.endWrite();
-  needsFullRedraw = false;
 
   fpsCounter.update();
 }
