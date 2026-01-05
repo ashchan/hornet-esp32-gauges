@@ -242,9 +242,11 @@ private:
 
 public:
   void show(lgfx::LGFX_Sprite& canvas, int x, int y) {
+  #ifdef SHOW_FPS
     canvas.setCursor(x, y);
     canvas.setTextColor(TFT_WHITE);
     canvas.printf("fps:%d", getFPS());
+  #endif
   }
 
   void update() {
