@@ -10,6 +10,9 @@
   #define ESP_MAX_TX_POWER 20
 #endif
 
+#define MAX_VALUE 65535
+#define MID_VALUE (MAX_VALUE / 2)
+
 #pragma pack(push, 1)
 enum class MessageCategory : uint8_t {
   Common,
@@ -123,14 +126,14 @@ struct __attribute__((packed)) IfeiMessage {
 struct __attribute__((packed)) SaiMessage {
   MessageHeader header{category: MessageCategory::SAI};
 
-  uint16_t slipBall;
-  uint16_t bank;
-  uint16_t rateOfTurn;
-  uint16_t manPitchAdj;
-  uint16_t pitch;
-  uint16_t attWarningFlag;
-  uint16_t pointerHor;
-  uint16_t pointerVer;
+  uint16_t slipBall = MID_VALUE;
+  uint16_t bank = MID_VALUE;
+  uint16_t rateOfTurn = MID_VALUE;
+  uint16_t manPitchAdj = MID_VALUE;
+  uint16_t pitch = MID_VALUE;
+  uint16_t attWarningFlag = MAX_VALUE;
+  uint16_t pointerHor = MID_VALUE;
+  uint16_t pointerVer = MID_VALUE;
 };
 #pragma pack(pop)
 

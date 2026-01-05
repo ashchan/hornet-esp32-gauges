@@ -29,7 +29,7 @@ The following projects and resources were used as references or starting points:
   - [SCUBA82/OH-IFEI](https://github.com/SCUBA82/OH-IFEI)
   - [ashchan/OH-IFEI-DIS08070H](https://github.com/ashchan/OH-IFEI-DIS08070H) (_My fork for the Elecrow 7" HMI display_)
 * Standby Attitude and Roll Indicator Gauge
-  - [A-10C Standby ADI](https://forum.dcs.world/topic/281538-code-sketchbook-repository-arduino-unomega-boards-dcs-bios-and-programming-helpplease-post-your-working-sketches-here/#findComment-5190772)
+  - [SCUBA82/OH-SARI](https://github.com/SCUBA82/OH-SARI)
   - [shef-code/F18_SARI_v2](https://github.com/shef-code/F18_SARI_v2)
 * Airspeed Indicator
   - [shef-code/F18-AirspeedIndicator](https://github.com/shef-code/F18-AirspeedIndicator)
