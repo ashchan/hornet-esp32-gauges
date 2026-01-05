@@ -22,18 +22,6 @@ LGFX_Sprite sBANK_INDICATOR;
 LGFX_Sprite sBEZEL_CLIPPED;          // Clipped BEZEL to cover animated area
 LGFX_Sprite sBOTTOM_CLIPPED;         // Clipped BEZEL to cover animated area
 
-// Parameters for the main clipped area - Bezel
-constexpr int clipX = 82;
-constexpr int clipY = 74;
-constexpr int clipWidth = 316;
-constexpr int clipHeight = 316;
-
-// Parameters for the bottom clipped area - slip ball and rate of turn
-constexpr int clipBottomX = 190;
-constexpr int clipBottomY = 412;
-constexpr int clipBottomWidth = 100;
-constexpr int clipBottomHeight = 54;
-
 const uint8_t colorDepth = 16;
 const uint16_t transparentColor = 0x00FF00U; // Pure green
 
@@ -137,6 +125,18 @@ void pushWithOpaqueSpans(LGFX_Sprite& target, LGFX_Sprite& patch, int dstX, int 
   }
 }
 
+// Parameters for the main clipped area - Bezel
+constexpr int clipX = 82;
+constexpr int clipY = 74;
+constexpr int clipWidth = 316;
+constexpr int clipHeight = 316;
+
+// Parameters for the bottom clipped area - slip ball and rate of turn
+constexpr int clipBottomX = 190;
+constexpr int clipBottomY = 412;
+constexpr int clipBottomWidth = 100;
+constexpr int clipBottomHeight = 54;
+
 void createSprites() {
   sMainSprite.setPsram(true);
   sMainSprite.setColorDepth(colorDepth);
@@ -232,21 +232,48 @@ void initRenderer() {
   sADI_OFF_FLAG.setPivot(8, 10);
 }
 
+class FPSCounter {
+private:
+  std::uint32_t sec, psec;
+  std::uint32_t fps = 0, frame_count = 0;
+
+public:
+  void show(lgfx::LGFX_Sprite& canvas, int x, int y) {
+    canvas.setCursor(x, y);
+    canvas.setTextColor(TFT_WHITE);
+    canvas.printf("fps:%d", getFPS());
+  }
+
+  void update() {
+    ++frame_count;
+    sec = lgfx::millis() / 1000;
+    if (psec != sec) {
+      psec = sec;
+      fps = frame_count;
+      frame_count = 0;
+    }
+  }
+
+  std::uint32_t getFPS() const { return fps; }
+};
+
 void render(SaiMessage message) {
   static bool needsFullRedraw = true;
 
-  int ballY = map(message.pitch, 0, 65535, 180, 1580);
-  sADI_BALL.setPivot(sADI_BALL.width() / 2, ballY);
-  int ballAngle = map(message.bank, 0, 65534, -180, 180); // 65534: take of the initial round (we use 65535 / 2 as default value)
-  int bankIndicatorAngle = map(message.bank, 0, 65535, -180, 180);
-  int wingsY = map(message.manPitchAdj, 0, 65535, 0, tft.height());
-  int pointerHorY = map(message.pointerHor, 0, 65535, 25, 450);
-  int pointerVerX = map(message.pointerVer, 0, 65535, 15, 420); // Need to consider the handle position
-  int slipBallX = map(message.slipBall, 0, 65535, 190, 265);
-  int turnRateX = map(message.rateOfTurn, 0, 65535, 197, 262);
+  const int slipBallX = map(message.slipBall, 0, 65535, 190, 265), slipBallY = 413;
+  const int turnRateX = map(message.rateOfTurn, 0, 65535, 200, 264), turnRateY = 447;
+  const int ballOffset = map(message.pitch, 0, 65535, 180, 1550);
+  // 65534: take of the initial round (we use 65535 / 2 as default value)
+  const int ballAngle = map(message.bank, 0, 65534, -180, 180);
+  const int ballX = 240, ballY = 240;
+  const int wingsX = 108, wingsY = map(message.manPitchAdj, 0, 65535, 140, 320);
+  const int pointerHorX = 68, pointerHorY = map(message.pointerHor, 0, 65535, 20, 440);
+  const int pointerVerX = map(message.pointerVer, 0, 65535, 15, 420), pointerVerY = 70;
+  const int bankIndicatorX = 240, bankIndicatorY = 233;
+  const int bankIndicatorAngle = map(message.bank, 0, 65535, -180, 180);
 
   static int prevAdiOffFlagAngle = -1;
-  int adiOffFlagAngle = message.attWarningFlag == 0 ? 0 : 30;
+  const int adiOffFlagAngle = message.attWarningFlag == 0 ? 0 : 30;
 
   bool needsRedrawOffFlag = prevAdiOffFlagAngle != adiOffFlagAngle;
   prevAdiOffFlagAngle = adiOffFlagAngle;
@@ -258,30 +285,28 @@ void render(SaiMessage message) {
 
   tft.setClipRect(clipBottomX, clipBottomY, clipBottomWidth, clipBottomHeight);
   sBOTTOM_CLIPPED.pushSprite(&sMainSprite, clipBottomX, clipBottomY, transparentColor);
-  sADI_SLIP_BALL.pushSprite(&sMainSprite, slipBallX, 413, transparentColor);
-  sTURN_RATE.pushSprite(&sMainSprite, turnRateX, 447, transparentColor);
+  sADI_SLIP_BALL.pushSprite(&sMainSprite, slipBallX, slipBallY, transparentColor);
+  sTURN_RATE.pushSprite(&sMainSprite, turnRateX, turnRateY, transparentColor);
   sMainSprite.pushSprite(&tft, 0, 0);
 
   tft.setClipRect(clipX, clipY, clipWidth, clipHeight);
-  sADI_BALL.pushRotateZoom(&sMainSprite, 240, 230, ballAngle, 1, 1);
+  sADI_BALL.setPivot(sADI_BALL.width() / 2, ballOffset);
+  sADI_BALL.pushRotateZoom(&sMainSprite, ballX, ballY, ballAngle, 1, 1);
 
   if (needsFullRedraw) {
     sADI_BEZEL_INNER.pushSprite(&tft, -1, -1, transparentColor);
   }
   pushWithOpaqueSpans(sMainSprite, sBEZEL_CLIPPED, clipX - 1, clipY - 1);
 
-  sADI_WINGS.pushSprite(&sMainSprite, 110, wingsY, transparentColor);
-  sILS_POINTER_H.pushSprite(&sMainSprite, 68, pointerHorY, transparentColor);
-  sILS_POINTER_V.pushSprite(&sMainSprite, pointerVerX, 70, transparentColor);
-  sBANK_INDICATOR.pushRotateZoom(&sMainSprite, 240, 233, bankIndicatorAngle, 1, 1, transparentColor);
+  sADI_WINGS.pushSprite(&sMainSprite, wingsX, wingsY, transparentColor);
+  sILS_POINTER_H.pushSprite(&sMainSprite, pointerHorX, pointerHorY, transparentColor);
+  sILS_POINTER_V.pushSprite(&sMainSprite, pointerVerX, pointerVerY, transparentColor);
+  sBANK_INDICATOR.pushRotateZoom(&sMainSprite, bankIndicatorX, bankIndicatorY, bankIndicatorAngle, 1, 1, transparentColor);
 
-  static std::uint32_t sec, psec;
-  static std::uint32_t fps = 0, frame_count = 0;
-  sMainSprite.setCursor(100, 100);
-  sMainSprite.setTextColor(TFT_WHITE);
-  sMainSprite.printf("fps:%d", fps);
+  static FPSCounter fpsCounter;
+  fpsCounter.show(sMainSprite, 100, 100);
+
   sMainSprite.pushSprite(&tft, 0, 0);
-
   tft.clearClipRect();
 
   //sADI_OFF_FLAG.pushRotateZoom(&tft, 420, 120, adiOffFlagAngle, 1, 1, transparentColor);
@@ -292,14 +317,7 @@ void render(SaiMessage message) {
   tft.endWrite();
   needsFullRedraw = false;
 
-  // Calc FPS
-  ++frame_count;
-  sec = lgfx::millis() / 1000;
-  if (psec != sec) {
-    psec = sec;
-    fps = frame_count;
-    frame_count = 0;
-  }
+  fpsCounter.update();
 }
 
 void setBrightness(uint16_t value) {
