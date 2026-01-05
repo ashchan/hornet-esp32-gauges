@@ -266,7 +266,7 @@ void render(SaiMessage message) {
   // 65534: take of the initial round (we use 65535 / 2 as default value)
   const int ballAngle = map(message.bank, 0, 65534, -180, 180);
   const int ballX = 240, ballY = 240;
-  const int wingsX = 108, wingsY = map(message.manPitchAdj, 0, 65535, 140, 320);
+  const int wingsX = 108, wingsY = map(message.manPitchAdj, 0, 65535, 320, 140);
   const int pointerHorX = 68, pointerHorY = map(message.pointerHor, 0, 65535, 20, 440);
   const int pointerVerX = map(message.pointerVer, 0, 65535, 15, 420), pointerVerY = 70;
   const int bankIndicatorX = 240, bankIndicatorY = 233;
