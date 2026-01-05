@@ -55,13 +55,13 @@ void loop() {
   const uint32_t now = millis();
 
   // DEBUG purpose only
+  //hasNewMessage = true;
   hasNewMessage = true;
-  //lastMessage.attWarningFlag += 400;
-  //lastMessage.pointerHor += 400;
-  //lastMessage.pointerVer += 400;
-  lastMessage.bank += 1200;
-  lastMessage.slipBall += 1000;
-  lastMessage.rateOfTurn += 1000;
+  //lastMessage.pointerHor = 0;
+  //lastMessage.pointerVer = 0;
+  //lastMessage.bank += 1200;
+  //lastMessage.slipBall += 1000;
+  //lastMessage.rateOfTurn += 1000;
 
   static uint32_t lastUpdatedAt = 0;
   if (now - lastUpdatedAt > 40 && hasNewMessage) {
