@@ -90,7 +90,7 @@ enum DisplayName {
 
 //################ Configure Display elelments ###############################
 //{width,hight, posx, posy, textalign, sprite, value}
-int globalOffsetX = 30;
+int globalOffsetX = 0;
 int globalOffsetY = 10;
 DisplayElement displayElements[] = {
   //{  w,  h, px, py,a, sprite,   v }
