@@ -2,10 +2,11 @@
 
 ESP32-based gauges for the DCS F/A-18C Hornet.
 
-This project primarily uses the Waveshare ESP32-S3-LCD-1.85, SP32-S3-LCD-1.28 and ESP32-S3-LCD-2.8C round displays to render gauges for the [OpenHornet](https://openhornet.com) project.
+This project primarily uses the Waveshare ESP32-S3-LCD-1.85, SP32-S3-LCD-1.28 and ESP32-S3-LCD-2.8C round displays to render gauges for the [OpenHornet](https://openhornet.com) project. A Waveshare ESP32-S3-LCD-7 7" display is also used for the IFEI.
 * [Waveshare ESP32-S3-LCD-1.85](https://www.waveshare.com/wiki/ESP32-S3-LCD-1.85)
 * [Waveshare ESP32-S3-LCD-1.28](https://www.waveshare.com/wiki/ESP32-S3-LCD-1.28)
 * [Waveshare ESP32-S3-LCD-2.8C](https://www.waveshare.com/wiki/ESP32-S3-LCD-2.8C)
+* [Waveshare ESP32-S3-LCD-7](https://www.waveshare.com/wiki/ESP32-S3-Touch-LCD-7)
 
 A dedicated Gateway / Hub ESP32-S3 board communicates with DCS-BIOS, receiving all required aircraft data.
 The hub then broadcasts this data in a custom format to multiple gauge ESP32 clients wirelessly using [ESP-NOW](https://www.espressif.com/en/solutions/low-power-solutions/esp-now).
