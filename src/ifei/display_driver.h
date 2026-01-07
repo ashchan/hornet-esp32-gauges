@@ -50,12 +50,12 @@ public:
       cfg.pin_vsync = 3;
       cfg.pin_hsync = 46;
       cfg.pin_pclk = 7;
-      cfg.freq_write = 16000000;
+      cfg.freq_write = 13900000;
 
       cfg.hsync_polarity = 0;
       cfg.hsync_front_porch = 8;
       cfg.hsync_pulse_width = 4;
-      cfg.hsync_back_porch = 8;
+      cfg.hsync_back_porch = 43;
 
       cfg.vsync_polarity = 0;
       cfg.vsync_front_porch = 8;
