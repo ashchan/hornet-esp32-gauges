@@ -222,11 +222,8 @@ void createDisplayElements() {
 
 //Align text within its sprite.
 int setTextAlignment(DisplayElement element, TextAlignment alignment) {
-  int textWidth = element.sprite->textWidth(element.value);
-  // Special fix for " SP" where the width calculation for the space is incorrect
-  if (element.posX == displayElements[TMPL].posX && strcmp(element.value, " SP") == 0) {
-    textWidth = element.sprite->textWidth("0SP");
-  }
+  // Fix the width calculation for the sprite when it contains spaces
+  int textWidth = element.sprite->textWidth("0") * strlen(element.value);
   if (alignment == TextAlignmentRight) {
     return element.spriteWidth - textWidth;
   } else if (alignment == TextAlignmentCenter) {
