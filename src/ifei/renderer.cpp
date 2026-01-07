@@ -222,10 +222,15 @@ void createDisplayElements() {
 
 //Align text within its sprite.
 int setTextAlignment(DisplayElement element, TextAlignment alignment) {
+  int textWidth = element.sprite->textWidth(element.value);
+  // Special fix for " SP" where the width calculation for the space is incorrect
+  if (element.posX == displayElements[TMPL].posX && strcmp(element.value, " SP") == 0) {
+    textWidth = element.sprite->textWidth("0SP");
+  }
   if (alignment == TextAlignmentRight) {
-    return element.spriteWidth - element.sprite->textWidth(element.value);
+    return element.spriteWidth - textWidth;
   } else if (alignment == TextAlignmentCenter) {
-    return (element.spriteWidth - element.sprite->textWidth(element.value)) / 2;
+    return (element.spriteWidth - textWidth) / 2;
   } else {
     return 0;
   }
@@ -254,6 +259,21 @@ void copyTrimLeft(char* dst, size_t dstSize, const char* src) {
   }
 
   snprintf(dst, dstSize, "%s", src);
+}
+
+bool isStringEmpty(const char* str) {
+  if (str == nullptr || str[0] == '\0') {
+    return true;
+  }
+
+  while (*str) {
+    if (*str != ' ') {
+      return false;
+    }
+    str++;
+  }
+
+  return true;
 }
 
 void renderNozzleLeft(IfeiMessage message) {
@@ -427,16 +447,32 @@ void renderIfeiMessage(IfeiMessage message) {
     updateElement(displayElements[RPMT]);
   }
   // TMPL
-  setNumber(message.tempL, value, len);
-  if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
-    strcpy(displayElements[TMPL].value, value);
-    updateElement(displayElements[TMPL]);
+  if (!isStringEmpty(message.sp)) {
+    strcpy(value, message.sp);
+    if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
+      strcpy(displayElements[TMPL].value, value);
+      updateElement(displayElements[TMPL]);
+    }
+  } else {
+    setNumber(message.tempL, value, len);
+    if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
+      strcpy(displayElements[TMPL].value, value);
+      updateElement(displayElements[TMPL]);
+    }
   }
   // TMPR
-  setNumber(message.tempR, value, len);
-  if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
-    strcpy(displayElements[TMPR].value, value);
-    updateElement(displayElements[TMPR]);
+  if (!isStringEmpty(message.codes)) {
+    strcpy(value, message.codes);
+    if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
+      strcpy(displayElements[TMPR].value, value);
+      updateElement(displayElements[TMPR]);
+    }
+  } else {
+    setNumber(message.tempR, value, len);
+    if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
+      strcpy(displayElements[TMPR].value, value);
+      updateElement(displayElements[TMPR]);
+    }
   }
   // TMPT
   const char* tmpTexture = message.tempTex == 1 ? "TEMP" : "    ";
