@@ -5,8 +5,6 @@
 #include "message.h"
 #include "renderer.h"
 
-#define Serial Serial0
-
 static IfeiMessage lastMessage{};
 static volatile uint32_t lastMessageMs = 0;
 

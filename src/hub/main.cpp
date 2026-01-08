@@ -69,7 +69,7 @@ static uint16_t previousInstrumentLighting;
 static uint16_t previousConsoleLighting;
 
 static const uint32_t messageInterval = 33; // 1000 / messageInterval Hz max
-static const uint32_t ifeiMessageInterval = 250;
+static const uint32_t ifeiMessageInterval = 100;
 static const uint32_t periodicMessageInterval = 5000;
 static uint32_t lastSendAt = 0;
 static uint32_t lastIfeiSendAt = 0;
