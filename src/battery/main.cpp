@@ -26,7 +26,9 @@ static const uint16_t CANVAS_W = 240, CANVAS_H = 240;
 TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite gaugeBack(&tft);   // full-frame canvas
 TFT_eSprite needleU(&tft);     // left needle
+TFT_eSprite needleUGreen(&tft);
 TFT_eSprite needleE(&tft);     // right needle
+TFT_eSprite needleEGreen(&tft);
 
 // ── State updated by DCS callbacks (ISR-safe) ───────────────────────────────────
 static volatile uint16_t rawU = 0;
@@ -108,11 +110,25 @@ void setup() {
   needleU.setPivot(7, 84);
   needleU.pushImage(0, 0, 15, 88, Needle);
 
+  needleUGreen.setColorDepth(COLOR_DEPTH);
+  needleUGreen.createSprite(15, 88);
+  needleUGreen.setSwapBytes(true);
+  needleUGreen.setPivot(7, 84);
+  needleUGreen.pushImage(0, 0, 15, 88, Needle);
+  recolorSpriteGreen(needleUGreen);
+
   needleE.setColorDepth(COLOR_DEPTH);
   needleE.createSprite(15, 88);
   needleE.setSwapBytes(true);
   needleE.setPivot(7, 84);
   needleE.pushImage(0, 0, 15, 88, Needle);
+
+  needleEGreen.setColorDepth(COLOR_DEPTH);
+  needleEGreen.createSprite(15, 88);
+  needleEGreen.setSwapBytes(true);
+  needleEGreen.setPivot(7, 84);
+  needleEGreen.pushImage(0, 0, 15, 88, Needle);
+  recolorSpriteGreen(needleEGreen);
 
   // First paint
   renderGauge(map_u(rawU), map_e(rawE));
@@ -145,12 +161,17 @@ void loop() {
 // ── Rendering (heavy work lives here, not in callbacks) ────────────────────────
 void renderGauge(int16_t angleU, int16_t angleE) {
   // Clear canvas + draw static background
-  //gaugeBack.fillSprite(TFT_BLACK);
+  gaugeBack.fillSprite(TFT_BLACK);
   gaugeBack.pushImage(0, 0, CANVAS_W, CANVAS_H, Battery);
 
-  // Rotate needles into the canvas (transparent background)
-  needleU.pushRotated(&gaugeBack, angleU, TFT_TRANSPARENT);
-  needleE.pushRotated(&gaugeBack, angleE, TFT_TRANSPARENT);
+  if (brightness > DEFAULT_TFT_BRIGHTNESS) {
+    recolorSpriteGreen(gaugeBack);
+    needleUGreen.pushRotated(&gaugeBack, angleU, TFT_TRANSPARENT);
+    needleEGreen.pushRotated(&gaugeBack, angleE, TFT_TRANSPARENT);
+  } else {
+    needleU.pushRotated(&gaugeBack, angleU, TFT_TRANSPARENT);
+    needleE.pushRotated(&gaugeBack, angleE, TFT_TRANSPARENT);
+  }
 
   // Push full frame to screen
   gaugeBack.pushSprite(0, 0);

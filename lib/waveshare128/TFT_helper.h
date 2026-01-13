@@ -53,3 +53,57 @@ void recolorSpriteGreen(TFT_eSprite& sprite) {
     }
   }
 }
+
+// Blend pixel toward green based on brightness + knob.
+// This makes even pure-white markings shift greener (unlike additive).
+void tintGreen(TFT_eSprite& sprite,
+                             uint8_t illum,         // 0..255
+                             uint16_t greenNative = 0x07E0,  // e.g. 0x07E0 (native RGB565)
+                             uint8_t strength = 255,// 0..255
+                             uint8_t threshold = 2) // 0..31
+{
+  uint16_t* p = (uint16_t*)sprite.getPointer();
+  if (!p || illum == 0) return;
+
+  const int n = sprite.width() * sprite.height();
+
+  // Convert green to swapped storage once
+  uint16_t greenSwapped = SWAP16(greenNative);
+
+  // Unpack native green once (0..31,0..63,0..31)
+  uint16_t gn = greenNative;
+  uint8_t gr5 = (gn >> 11) & 0x1F;
+  uint8_t gg6 = (gn >>  5) & 0x3F;
+  uint8_t gb5 =  gn        & 0x1F;
+
+  for (int i = 0; i < n; i++)
+  {
+    uint16_t cn = SWAP16(p[i]); // sprite is swapped, convert to native
+
+    uint8_t r5 = (cn >> 11) & 0x1F;
+    uint8_t g6 = (cn >>  5) & 0x3F;
+    uint8_t b5 =  cn        & 0x1F;
+
+    // brightness estimate (0..31)
+    uint8_t lum5 = r5;
+    if (b5 > lum5) lum5 = b5;
+    uint8_t g5 = g6 >> 1;
+    if (g5 > lum5) lum5 = g5;
+
+    if (lum5 < threshold) continue;
+
+    // Alpha = brightness * knob * strength (0..255)
+    // lum5/31 gives 0..1, then scaled by illum and strength.
+    uint16_t a = (uint32_t)lum5 * illum * strength / (31u * 255u);
+    if (a > 255) a = 255;
+
+    // Blend toward green target:
+    // out = src*(1-a) + green*a
+    r5 = (r5 * (255 - a) + gr5 * a) / 255;
+    g6 = (g6 * (255 - a) + gg6 * a) / 255;
+    b5 = (b5 * (255 - a) + gb5 * a) / 255;
+
+    uint16_t outNative = (r5 << 11) | (g6 << 5) | b5;
+    p[i] = SWAP16(outNative); // store swapped
+  }
+}

@@ -30,6 +30,8 @@ TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite gaugeBack(&tft);  // background canvas
 TFT_eSprite needle1(&tft);    // left/right as per art
 TFT_eSprite needle2(&tft);
+TFT_eSprite needle1Green(&tft);
+TFT_eSprite needle2Green(&tft);
 
 // ── DCS-driven state (updated in ISR-safe callbacks) ───────────────────────────
 static volatile uint16_t raw1 = 0;      // left hyd (0x750e)
@@ -114,11 +116,25 @@ void setup() {
   needle1.setPivot(17, 103);
   needle1.pushImage(0, 0, 33, 120, hydPressNeedle1);
 
+  needle1Green.setColorDepth(colorDepth);
+  needle1Green.createSprite(33, 120);
+  needle1Green.setSwapBytes(true);
+  needle1Green.setPivot(17, 103);
+  needle1Green.pushImage(0, 0, 33, 120, hydPressNeedle1);
+  recolorSpriteGreen(needle1Green);
+
   needle2.setColorDepth(colorDepth);
   needle2.createSprite(33, 120);
   needle2.setSwapBytes(true);
   needle2.setPivot(17, 103);
   needle2.pushImage(0, 0, 33, 120, hydPressNeedle2);
+
+  needle2Green.setColorDepth(colorDepth);
+  needle2Green.createSprite(33, 120);
+  needle2Green.setSwapBytes(true);
+  needle2Green.setPivot(17, 103);
+  needle2Green.pushImage(0, 0, 33, 120, hydPressNeedle2);
+  recolorSpriteGreen(needle2Green);
 
   // Initial paint
   renderGauge(map_hyd(raw1), map_hyd(raw2));
@@ -151,8 +167,14 @@ void renderGauge(int16_t angle1, int16_t angle2) {
   gaugeBack.fillSprite(TFT_BLACK);
   gaugeBack.pushImage(0, 0, W, H, hydPressBackground);
 
-  needle1.pushRotated(&gaugeBack, angle1, TFT_TRANSPARENT);
-  needle2.pushRotated(&gaugeBack, angle2, TFT_TRANSPARENT);
+  if (brightness > DEFAULT_TFT_BRIGHTNESS) {
+    recolorSpriteGreen(gaugeBack);
+    needle1Green.pushRotated(&gaugeBack, angle1, TFT_TRANSPARENT);
+    needle2Green.pushRotated(&gaugeBack, angle2, TFT_TRANSPARENT);
+  } else {
+    needle1.pushRotated(&gaugeBack, angle1, TFT_TRANSPARENT);
+    needle2.pushRotated(&gaugeBack, angle2, TFT_TRANSPARENT);
+  }
 
   gaugeBack.pushSprite(0, 0);
 }
