@@ -26,6 +26,7 @@ static const uint16_t CANVAS_W = 240, CANVAS_H = 240;
 TFT_eSPI tft = TFT_eSPI();
 TFT_eSprite sprBack(&tft);
 TFT_eSprite sprNeedle(&tft);
+TFT_eSprite sprNeedleGreen(&tft);
 
 static volatile bool dirtyBrake = false;
 static volatile uint16_t pressure = 0;
@@ -103,6 +104,13 @@ void setup() {
   sprNeedle.setPivot(7, 150);
   sprNeedle.pushImage(0, 0, 15, 150, brakePressNeedle);
 
+  sprNeedleGreen.setColorDepth(COLOR_DEPTH);
+  sprNeedleGreen.createSprite(15, 150);
+  sprNeedleGreen.setSwapBytes(true);
+  sprNeedleGreen.setPivot(7, 150);
+  sprNeedleGreen.pushImage(0, 0, 15, 150, brakePressNeedle);
+  recolorSpriteGreen(sprNeedleGreen);
+
   renderGauge(mapBrakeValue(pressure));
 
   initEspNowClient();
@@ -131,9 +139,13 @@ void loop() {
 
 // ── Rendering ──────────────────────────────────────────────────────────────────
 void renderGauge(int16_t angleDeg) {
-  //sprBack.fillSprite(TFT_BLACK);
   sprBack.pushImage(0, 0, CANVAS_W, CANVAS_H, brakePressBackground);
-  sprNeedle.pushRotated(&sprBack, angleDeg, TFT_TRANSPARENT);
+  if (brightness > DEFAULT_TFT_BRIGHTNESS) {
+    recolorSpriteGreen(sprBack);
+    sprNeedleGreen.pushRotated(&sprBack, angleDeg, TFT_TRANSPARENT);
+  } else {
+    sprNeedle.pushRotated(&sprBack, angleDeg, TFT_TRANSPARENT);
+  }
   sprBack.pushSprite(0, 0);
 }
 
