@@ -72,7 +72,7 @@ public:
 
     {
       auto cfg = _light_instance.config();
-      cfg.pin_bl = GPIO_NUM_2;
+      cfg.pin_bl = GPIO_NUM_16;
       _light_instance.config(cfg);
     }
     _panel_instance.light(&_light_instance);
