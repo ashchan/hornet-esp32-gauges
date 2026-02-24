@@ -90,32 +90,32 @@ enum DisplayName {
 
 //################ Configure Display elelments ###############################
 int globalOffsetX = 0;
-int globalOffsetY = 10;
+int globalOffsetY = 0;
 DisplayElement displayElements[] = {
   //{width,hight, posx, posy, textalign, sprite, value}
-  {76,  38,  globalOffsetX + 92,  globalOffsetY + 20, TextAlignmentRight, &twoDigitSprite, "12"},  // RPML
-  {76,  38,  globalOffsetX + 246, globalOffsetY + 20, TextAlignmentRight, &twoDigitSprite, "34"}, // RPMR
-  {58,  18,  globalOffsetX + 180, globalOffsetY + 31, TextAlignmentCenter, &labelSprite, "RPM"},   // RPMT
-  {108, 38,  globalOffsetX + 60,  globalOffsetY + 85, TextAlignmentRight, &threeDigitSprite, "567"}, // TMPL
-  {108, 38,  globalOffsetX + 246, globalOffsetY + 85, TextAlignmentRight, &threeDigitSprite, "890"}, // TMPR
-  {58,  18,  globalOffsetX + 180, globalOffsetY + 96, TextAlignmentCenter, &labelSprite, "TEMP"}, // TMPT
-  {108, 38,  globalOffsetX + 60,  globalOffsetY + 160, TextAlignmentRight, &threeDigitSprite, "123"}, // FFL
-  {108, 38,  globalOffsetX + 246, globalOffsetY + 160, TextAlignmentRight, &threeDigitSprite, "456"}, // FFR
-  {58,  18,  globalOffsetX + 180, globalOffsetY + 171, TextAlignmentCenter, &labelSprite, "FF"},    // FFTU
-  {65,  18,  globalOffsetX + 180, globalOffsetY + 188, TextAlignmentCenter, &labelSprite, "X100"},  // FFTL
-  {76,  38,  globalOffsetX + 92,  globalOffsetY + 400, TextAlignmentRight, &twoDigitSprite, "78"},  // OILL
-  {76,  38,  globalOffsetX + 246, globalOffsetY + 400, TextAlignmentRight, &twoDigitSprite, "90"}, // OILR
-  {58,  18,  globalOffsetX + 180, globalOffsetY + 415, TextAlignmentCenter, &labelSprite, "OIL"},   // OILT
-  {150, 154, globalOffsetX + 58,  globalOffsetY + 230, TextAlignmentLeft, &leftNozzleSprites[0], "0"}, // NOZL
-  {150, 154, globalOffsetX + 211, globalOffsetY + 230, TextAlignmentLeft, &rightNozzleSprites[0], "0"}, // NOZR
-  {58,  18,  globalOffsetX + 180, globalOffsetY + 300, TextAlignmentCenter, &labelSprite, "NOZ"},  // NOZT
-  {176, 38,  globalOffsetX + 560, globalOffsetY + 30,  TextAlignmentRight, &fuelSprite, "12345"}, // FUELU
-  {176, 38,  globalOffsetX + 560, globalOffsetY + 85,  TextAlignmentRight, &fuelSprite, "67890"}, // FUELL
-  {176, 38,  globalOffsetX + 560, globalOffsetY + 215, TextAlignmentRight, &fuelSprite, "500"},  // BINGO
-  {58,  18,  globalOffsetX + 625, globalOffsetY + 185, TextAlignmentCenter, &labelSprite, "BINGO"}, // BINGOT
-  {176, 35,  globalOffsetX + 570, globalOffsetY + 350, TextAlignmentRight, &clockSprite, ""}, // CLOCKU
-  {176, 35,  globalOffsetX + 570, globalOffsetY + 415, TextAlignmentRight, &clockSprite, ""}, // CLOCKL
-  {18,  18,  globalOffsetX + 746, globalOffsetY + 367, TextAlignmentCenter, &tagSprite, "Z"}, // ZULU Tag
+  {76,  38,  globalOffsetX + 76,  globalOffsetY + 42, TextAlignmentRight, &twoDigitSprite, "12"},  // RPML
+  {76,  38,  globalOffsetX + 242, globalOffsetY + 42, TextAlignmentRight, &twoDigitSprite, "34"}, // RPMR
+  {58,  18,  globalOffsetX + 170, globalOffsetY + 54, TextAlignmentCenter, &labelSprite, "RPM"},   // RPMT
+  {108, 38,  globalOffsetX + 48,  globalOffsetY + 112, TextAlignmentRight, &threeDigitSprite, "567"}, // TMPL
+  {108, 38,  globalOffsetX + 242, globalOffsetY + 112, TextAlignmentRight, &threeDigitSprite, "890"}, // TMPR
+  {58,  18,  globalOffsetX + 172, globalOffsetY + 120, TextAlignmentCenter, &labelSprite, "TEMP"}, // TMPT
+  {108, 38,  globalOffsetX + 44,  globalOffsetY + 178, TextAlignmentRight, &threeDigitSprite, "123"}, // FFL
+  {108, 38,  globalOffsetX + 242, globalOffsetY + 178, TextAlignmentRight, &threeDigitSprite, "456"}, // FFR
+  {58,  18,  globalOffsetX + 172, globalOffsetY + 186, TextAlignmentCenter, &labelSprite, "FF"},    // FFTU
+  {65,  18,  globalOffsetX + 168, globalOffsetY + 203, TextAlignmentCenter, &labelSprite, "X100"},  // FFTL
+  {76,  38,  globalOffsetX + 80,  globalOffsetY + 439, TextAlignmentRight, &twoDigitSprite, "78"},  // OILL
+  {76,  38,  globalOffsetX + 248, globalOffsetY + 439, TextAlignmentRight, &twoDigitSprite, "90"}, // OILR
+  {58,  18,  globalOffsetX + 176, globalOffsetY + 450, TextAlignmentCenter, &labelSprite, "OIL"},   // OILT
+  {150, 154, globalOffsetX + 46,  globalOffsetY + 252, TextAlignmentLeft, &leftNozzleSprites[0], "0"}, // NOZL
+  {150, 154, globalOffsetX + 204, globalOffsetY + 252, TextAlignmentLeft, &rightNozzleSprites[0], "0"}, // NOZR
+  {58,  18,  globalOffsetX + 172, globalOffsetY + 320, TextAlignmentCenter, &labelSprite, "NOZ"},  // NOZT
+  {176, 38,  globalOffsetX + 566, globalOffsetY + 56,  TextAlignmentRight, &fuelSprite, "12345"}, // FUELU
+  {176, 38,  globalOffsetX + 566, globalOffsetY + 132,  TextAlignmentRight, &fuelSprite, "67890"}, // FUELL
+  {176, 38,  globalOffsetX + 566, globalOffsetY + 246, TextAlignmentRight, &fuelSprite, "500"},  // BINGO
+  {58,  18,  globalOffsetX + 648, globalOffsetY + 215, TextAlignmentCenter, &labelSprite, "BINGO"}, // BINGOT
+  {176, 35,  globalOffsetX + 566, globalOffsetY + 378, TextAlignmentRight, &clockSprite, ""}, // CLOCKU
+  {176, 35,  globalOffsetX + 566, globalOffsetY + 440, TextAlignmentRight, &clockSprite, ""}, // CLOCKL
+  {18,  18,  globalOffsetX + 742, globalOffsetY + 392, TextAlignmentCenter, &tagSprite, "Z"}, // ZULU Tag
   {18,  18,  globalOffsetX + 736, globalOffsetY + 50,  TextAlignmentCenter, &tagSprite, "L"},  // L Tag
   {18,  18,  globalOffsetX + 736, globalOffsetY + 105, TextAlignmentCenter, &tagSprite, "R"}, // R Tag
 };
