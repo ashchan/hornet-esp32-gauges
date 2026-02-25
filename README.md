@@ -58,5 +58,9 @@ The following gauges require the filesystem image to be built and uploaded (in a
 - **IFEI**
 - **Standby Attitude and Roll Indicator Gauge**
 
+## IFEI Dimming/Backlight Control
+
+Require hardware modification to the IFEI display. See [IFEI README](src/ifei/README.md) for details.
+
 ## License
 This project is licensed under a [Custom Non-Commercial License](LICENSE). You can use and modify it for **personal and educational purposes only**. For commercial use, please contact the authors for permission.

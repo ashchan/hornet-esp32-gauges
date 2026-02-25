@@ -366,6 +366,7 @@ void renderClocks(IfeiMessage message) {
   } else if (message.clockS < 10) {
     seconds = "0" + seconds;
   }
+  Serial.println((char)message.dd1);
   renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
 
   // TODO: timer could show as " : : "
