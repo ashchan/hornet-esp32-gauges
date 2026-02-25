@@ -51,5 +51,12 @@ The following projects and resources were used as references or starting points:
   - [shef-code/F-18_BrakePressure_Gauge](https://github.com/shef-code/F-18_BrakePressure_Gauge)
   - [Example 3 – Brake Pressure Gauge](https://forum.dcs.world/topic/281538-code-sketchbook-repository-arduino-unomega-boards-dcs-bios-and-programming-helpplease-post-your-working-sketches-here/page/2/#findComment-5369303)
 
+## Filesystem Image Required
+
+The following gauges require the filesystem image to be built and uploaded (in addition to uploading the firmware):
+
+- **IFEI**
+- **Standby Attitude and Roll Indicator Gauge**
+
 ## License
 This project is licensed under a [Custom Non-Commercial License](LICENSE). You can use and modify it for **personal and educational purposes only**. For commercial use, please contact the authors for permission.
