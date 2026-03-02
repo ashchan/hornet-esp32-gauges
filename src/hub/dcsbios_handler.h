@@ -44,7 +44,8 @@ void reset() {
 
 #pragma region DCS Common Data
 void onAcftNameBufferChange(char* newValue) {
-  reset();
+  // 2026-03-02: Do not reset here. When the next mission is started DCSBIOS will not send unchanged data.
+  // reset();
   missionType = strcmp(newValue, "FA-18C_hornet") == 0 ? MissionType::Hornet : MissionType::Other;
 }
 DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
@@ -270,7 +271,7 @@ DcsBios::StringBuffer<1> ifeiOilTextureBuffer(FA_18C_hornet_IFEI_OIL_TEXTURE_A, 
 void onExtNozzlePosLChange(unsigned int newValue) {
   ifei.extNozzlePosL = newValue;
 }
-DcsBios::IntegerBuffer extNozzlePosLBuffer(FA_18C_hornet_EXT_NOZZLE_POS_L_A, 0xffff, 0, onExtNozzlePosLChange);
+DcsBios::IntegerBuffer extNozzlePosLBuffer(FA_18C_hornet_EXT_NOZZLE_POS_L, 0, onExtNozzlePosLChange);
 
 //Pointer visibility
 void onIfeiLpointerTextureChange(char* newValue) {
@@ -295,7 +296,7 @@ DcsBios::StringBuffer<1> ifeiL100TextureBuffer(FA_18C_hornet_IFEI_L100_TEXTURE_A
 void onExtNozzlePosRChange(unsigned int newValue) {
   ifei.extNozzlePosR = newValue;
 }
-DcsBios::IntegerBuffer extNozzlePosRBuffer(FA_18C_hornet_EXT_NOZZLE_POS_R_A, 0xffff, 0, onExtNozzlePosRChange);
+DcsBios::IntegerBuffer extNozzlePosRBuffer(FA_18C_hornet_EXT_NOZZLE_POS_R, 0, onExtNozzlePosRChange);
 
 //Pointer visibility
 void onIfeiRpointerTextureChange(char* newValue) {
@@ -440,7 +441,7 @@ DcsBios::StringBuffer<1> ifeiDd4Buffer(FA_18C_hornet_IFEI_DD_4_A, onIfeiDd4Chang
 void onIfeiDispIntLtChange(unsigned int newValue) {
   ifei.dispIntLt = newValue;
 }
-DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT_A, 0xffff, 0, onIfeiDispIntLtChange);
+DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT, 0, onIfeiDispIntLtChange);
 #pragma endregion IFEI
 
 #pragma region SARI
