@@ -271,7 +271,7 @@ DcsBios::StringBuffer<1> ifeiOilTextureBuffer(FA_18C_hornet_IFEI_OIL_TEXTURE_A, 
 void onExtNozzlePosLChange(unsigned int newValue) {
   ifei.extNozzlePosL = newValue;
 }
-DcsBios::IntegerBuffer extNozzlePosLBuffer(FA_18C_hornet_EXT_NOZZLE_POS_L, 0, onExtNozzlePosLChange);
+DcsBios::IntegerBuffer extNozzlePosLBuffer(FA_18C_hornet_EXT_NOZZLE_POS_L, onExtNozzlePosLChange);
 
 //Pointer visibility
 void onIfeiLpointerTextureChange(char* newValue) {
@@ -296,7 +296,7 @@ DcsBios::StringBuffer<1> ifeiL100TextureBuffer(FA_18C_hornet_IFEI_L100_TEXTURE_A
 void onExtNozzlePosRChange(unsigned int newValue) {
   ifei.extNozzlePosR = newValue;
 }
-DcsBios::IntegerBuffer extNozzlePosRBuffer(FA_18C_hornet_EXT_NOZZLE_POS_R, 0, onExtNozzlePosRChange);
+DcsBios::IntegerBuffer extNozzlePosRBuffer(FA_18C_hornet_EXT_NOZZLE_POS_R, onExtNozzlePosRChange);
 
 //Pointer visibility
 void onIfeiRpointerTextureChange(char* newValue) {
@@ -441,7 +441,7 @@ DcsBios::StringBuffer<1> ifeiDd4Buffer(FA_18C_hornet_IFEI_DD_4_A, onIfeiDd4Chang
 void onIfeiDispIntLtChange(unsigned int newValue) {
   ifei.dispIntLt = newValue;
 }
-DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT, 0, onIfeiDispIntLtChange);
+DcsBios::IntegerBuffer ifeiDispIntLtBuffer(FA_18C_hornet_IFEI_DISP_INT_LT, onIfeiDispIntLtChange);
 #pragma endregion IFEI
 
 #pragma region SARI
