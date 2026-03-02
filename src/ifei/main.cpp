@@ -40,7 +40,7 @@ void setup() {
 void loop() {
   const uint32_t now = millis();
 
-  if (now - (uint32_t)lastMessageMs > 100) {
+  if (now - (uint32_t)lastMessageMs > 50) {
     lastMessageMs = now;
     renderIfeiMessage(lastMessage);
   }

@@ -10,7 +10,6 @@ const unsigned int COLOR_DAY = 0xFFFFFFU;
 const unsigned int COLOR_NIGHT = 0x1CDD2AU;
 unsigned int ifeiColor = COLOR_DAY;
 unsigned int ifeiBrightness = 0;
-bool forceUpdate = false;
 
 // Create tft screen
 LGFX tft;
@@ -264,7 +263,6 @@ void createDisplayElements() {
   tagSprite.setFont(labelSprite.getFont());
   tagSprite.print(displayElements[NOZT].value);
 
-
   fuelSprite.createSprite(displayElements[FUELU].spriteWidth, displayElements[FUELU].spriteHeight);
   fuelSprite.loadFont(LittleFS,"/Fonts/IFEI-Data-36.vlw");
   fuelSprite.setFont(fuelSprite.getFont());
@@ -410,9 +408,8 @@ void renderClocks(IfeiMessage message) {
   } else if (message.clockS < 10) {
     seconds = "0" + seconds;
   }
-  Serial.println((char)message.dd1);  renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
+  renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
 
-  // TODO: timer could show as " : : "
   hours = String(message.timerH);
   if (message.timerH == -1) {
     hours = " ";
@@ -456,7 +453,6 @@ void renderIfeiMessage(IfeiMessage message) {
   unsigned int color = message.colorMode == 0 ? COLOR_DAY : COLOR_NIGHT;
   if (color != ifeiColor) {
     ifeiColor = color;
-    forceUpdate = true;
   }
 
   unsigned int brightness = map(message.dispIntLt, 0, 65535, 0, 255);
@@ -470,32 +466,32 @@ void renderIfeiMessage(IfeiMessage message) {
 
   // RPML
   setNumber(message.rpmL, value, len);
-  if (forceUpdate || strcmp(displayElements[RPML].value, value) != 0) {
+  if (strcmp(displayElements[RPML].value, value) != 0) {
     strcpy(displayElements[RPML].value, value);
     updateElement(displayElements[RPML]);
   }
   // RPMR
   setNumber(message.rpmR, value, len);
-  if (forceUpdate || strcmp(displayElements[RPMR].value, value) != 0) {
+  if (strcmp(displayElements[RPMR].value, value) != 0) {
     strcpy(displayElements[RPMR].value, value);
     updateElement(displayElements[RPMR]);
   }
   // RPMT
   const char* rpmTexture = message.rpmTex == 1 ? "RPM" : "   ";
-  if (forceUpdate || strcmp(displayElements[RPMT].value, rpmTexture) != 0) {
+  if (strcmp(displayElements[RPMT].value, rpmTexture) != 0) {
     strcpy(displayElements[RPMT].value, rpmTexture);
     updateElement(displayElements[RPMT]);
   }
   // TMPL
   if (!isStringEmpty(message.sp)) {
     strcpy(value, message.sp);
-    if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
+    if (strcmp(displayElements[TMPL].value, value) != 0) {
       strcpy(displayElements[TMPL].value, value);
       updateElement(displayElements[TMPL]);
     }
   } else {
     setNumber(message.tempL, value, len);
-    if (forceUpdate || strcmp(displayElements[TMPL].value, value) != 0) {
+    if (strcmp(displayElements[TMPL].value, value) != 0) {
       strcpy(displayElements[TMPL].value, value);
       updateElement(displayElements[TMPL]);
     }
@@ -503,55 +499,55 @@ void renderIfeiMessage(IfeiMessage message) {
   // TMPR
   if (!isStringEmpty(message.codes)) {
     strcpy(value, message.codes);
-    if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
+    if (strcmp(displayElements[TMPR].value, value) != 0) {
       strcpy(displayElements[TMPR].value, value);
       updateElement(displayElements[TMPR]);
     }
   } else {
     setNumber(message.tempR, value, len);
-    if (forceUpdate || strcmp(displayElements[TMPR].value, value) != 0) {
+    if (strcmp(displayElements[TMPR].value, value) != 0) {
       strcpy(displayElements[TMPR].value, value);
       updateElement(displayElements[TMPR]);
     }
   }
   // TMPT
   const char* tmpTexture = message.tempTex == 1 ? "TEMP" : "    ";
-  if (forceUpdate || strcmp(displayElements[TMPT].value, tmpTexture) != 0) {
+  if (strcmp(displayElements[TMPT].value, tmpTexture) != 0) {
     strcpy(displayElements[TMPT].value, tmpTexture);
     updateElement(displayElements[TMPT]);
   }
   // FFL
   setNumber(message.ffL, value, len);
-  if (forceUpdate || strcmp(displayElements[FFL].value, value) != 0) {
+  if (strcmp(displayElements[FFL].value, value) != 0) {
     strcpy(displayElements[FFL].value, value);
     updateElement(displayElements[FFL]);
   }
   // FFR
   setNumber(message.ffR, value, len);
-  if (forceUpdate || strcmp(displayElements[FFR].value, value) != 0) {
+  if (strcmp(displayElements[FFR].value, value) != 0) {
     strcpy(displayElements[FFR].value, value);
     updateElement(displayElements[FFR]);
   }
   // FFTU & FFTL
   const char* ffTexture = message.ffTex == 1 ? "FF" : "";
-  if (forceUpdate || strcmp(displayElements[FFTU].value, ffTexture) != 0) {
+  if (strcmp(displayElements[FFTU].value, ffTexture) != 0) {
     strcpy(displayElements[FFTU].value, ffTexture);
     updateElement(displayElements[FFTU]);
   }
   const char* ffScaleTexture = message.ffTex == 1 ? "X100" : "";
-  if (forceUpdate || strcmp(displayElements[FFTL].value, ffScaleTexture) != 0) {
+  if (strcmp(displayElements[FFTL].value, ffScaleTexture) != 0) {
     strcpy(displayElements[FFTL].value, ffScaleTexture);
     updateElement(displayElements[FFTL]);
   }
   // OILL
   setNumber(message.oilPressL, value, len);
-  if (forceUpdate || strcmp(displayElements[OILL].value, value) != 0) {
+  if (strcmp(displayElements[OILL].value, value) != 0) {
     strcpy(displayElements[OILL].value, value);
     updateElement(displayElements[OILL]);
   }
   // OILR
   setNumber(message.oilPressR, value, len);
-  if (forceUpdate || strcmp(displayElements[OILR].value, value) != 0) {
+  if (strcmp(displayElements[OILR].value, value) != 0) {
     strcpy(displayElements[OILR].value, value);
     updateElement(displayElements[OILR]);
   }
@@ -561,36 +557,36 @@ void renderIfeiMessage(IfeiMessage message) {
   renderNozzleRight(message);
   // OILT & NOZT
   const char* oilTexture = message.oilTex == 1 ? "OIL" : "   ";
-  if (forceUpdate || strcmp(displayElements[OILT].value, oilTexture) != 0) {
+  if (strcmp(displayElements[OILT].value, oilTexture) != 0) {
     strcpy(displayElements[OILT].value, oilTexture);
     updateElement(displayElements[OILT]);
   }
   const char* nozTexture = message.oilTex == 1 ? "NOZ" : "   ";
-  if (forceUpdate || strcmp(displayElements[NOZT].value, nozTexture) != 0) {
+  if (strcmp(displayElements[NOZT].value, nozTexture) != 0) {
     strcpy(displayElements[NOZT].value, nozTexture);
     updateElement(displayElements[NOZT]);
   }
   // FUELU
   copyTrimLeft(value, len, message.fuelUp);
-  if (forceUpdate || strcmp(displayElements[FUELU].value, value) != 0) {
+  if (strcmp(displayElements[FUELU].value, value) != 0) {
     strcpy(displayElements[FUELU].value, value);
     updateElement(displayElements[FUELU]);
   }
   // FUELL
   copyTrimLeft(value, len, message.fuelDown);
-  if (forceUpdate || strcmp(displayElements[FUELL].value, value) != 0) {
+  if (strcmp(displayElements[FUELL].value, value) != 0) {
     strcpy(displayElements[FUELL].value, value);
     updateElement(displayElements[FUELL]);
   }
   // BINGO
   setNumber(message.bingo, value, len);
-  if (forceUpdate || strcmp(displayElements[BINGO].value, value) != 0) {
+  if (strcmp(displayElements[BINGO].value, value) != 0) {
     strcpy(displayElements[BINGO].value, value);
     updateElement(displayElements[BINGO]);
   }
   // BINGOT
   const char* bingoTexture = message.bingoTex == 1 ? "BINGO" : "     ";
-  if (forceUpdate || strcmp(displayElements[BINGOT].value, bingoTexture) != 0) {
+  if (strcmp(displayElements[BINGOT].value, bingoTexture) != 0) {
     strcpy(displayElements[BINGOT].value, bingoTexture);
     updateElement(displayElements[BINGOT]);
   }
@@ -598,19 +594,19 @@ void renderIfeiMessage(IfeiMessage message) {
   renderClocks(message);
   // ZULU
   const char* tagZ = message.zTex == 1 ? "Z" : " ";
-  if (forceUpdate || strcmp(displayElements[ZULU].value, tagZ) != 0) {
+  if (strcmp(displayElements[ZULU].value, tagZ) != 0) {
     strcpy(displayElements[ZULU].value, tagZ);
     updateElement(displayElements[ZULU]);
   }
   // L
   const char* tagL = message.lTex == 1 ? "L" : " ";
-  if (forceUpdate || strcmp(displayElements[L].value, tagL) != 0) {
+  if (strcmp(displayElements[L].value, tagL) != 0) {
     strcpy(displayElements[L].value, tagL);
     updateElement(displayElements[L]);
   }
   // R
   const char* tagR = message.rTex == 1 ? "R" : " ";
-  if (forceUpdate || strcmp(displayElements[R].value, tagR) != 0) {
+  if (strcmp(displayElements[R].value, tagR) != 0) {
     strcpy(displayElements[R].value, tagR);
     updateElement(displayElements[R]);
   }
