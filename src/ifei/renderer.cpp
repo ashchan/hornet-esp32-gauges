@@ -450,10 +450,7 @@ void setNumber(int value, char* dest, unsigned int len) {
 }
 
 void renderIfeiMessage(IfeiMessage message) {
-  unsigned int color = message.colorMode == 0 ? COLOR_DAY : COLOR_NIGHT;
-  if (color != ifeiColor) {
-    ifeiColor = color;
-  }
+  ifeiColor = message.colorMode == 0 ? COLOR_DAY : COLOR_NIGHT;
 
   unsigned int brightness = map(message.dispIntLt, 0, 65535, 0, 255);
   if (brightness != ifeiBrightness) {
