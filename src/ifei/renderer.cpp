@@ -22,23 +22,26 @@ LGFX_Sprite labelSprite(&tft); // Text label sprite
 LGFX_Sprite fuelSprite(&tft);   // Fuel sprite
 LGFX_Sprite clockSprite(&tft);  // Clock sprite
 
-LGFX_Sprite leftNozzleSprites[27] // Left nozzle gauge sprites
+static const int NOZ_NEEDLE_DAY   = 0;
+static const int NOZ_NUMBERS_DAY  = 1;
+static const int NOZ_SCALE_DAY    = 2;
+static const int NOZ_NEEDLE_NIGHT = 3;
+static const int NOZ_NUMBERS_NIGHT = 4;
+static const int NOZ_SCALE_NIGHT  = 5;
+static const int NOZ_BLANK        = 6;
+
+LGFX_Sprite leftNozzleSprites[7] // Left nozzle gauge sprites
     {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
      LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
 
-LGFX_Sprite rightNozzleSprites[27] // Right nozzle gauge sprites
+LGFX_Sprite rightNozzleSprites[7] // Right nozzle gauge sprites
     {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
      LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
+
+LGFX_Sprite leftNozzleBg(&tft);
+LGFX_Sprite rightNozzleBg(&tft);
+LGFX_Sprite leftNozzleComposite(&tft);
+LGFX_Sprite rightNozzleComposite(&tft);
 
 LGFX_Sprite tagSprite(&tft); //Special Tags sprite (L/R/Z)
 
@@ -106,8 +109,8 @@ DisplayElement displayElements[] = {
   {76,  38,  globalOffsetX + 80,  globalOffsetY + 439, TextAlignmentRight, &twoDigitSprite, "78"},  // OILL
   {76,  38,  globalOffsetX + 248, globalOffsetY + 439, TextAlignmentRight, &twoDigitSprite, "90"}, // OILR
   {58,  18,  globalOffsetX + 176, globalOffsetY + 450, TextAlignmentCenter, &labelSprite, "OIL"},   // OILT
-  {150, 154, globalOffsetX + 46,  globalOffsetY + 252, TextAlignmentLeft, &leftNozzleSprites[0], "0"}, // NOZL
-  {150, 154, globalOffsetX + 204, globalOffsetY + 252, TextAlignmentLeft, &rightNozzleSprites[0], "0"}, // NOZR
+  {150, 154, globalOffsetX + 46,  globalOffsetY + 252, TextAlignmentLeft, &leftNozzleSprites[NOZ_NEEDLE_DAY], "0"}, // NOZL
+  {150, 154, globalOffsetX + 204, globalOffsetY + 252, TextAlignmentLeft, &rightNozzleSprites[NOZ_NEEDLE_DAY], "0"}, // NOZR
   {58,  18,  globalOffsetX + 172, globalOffsetY + 320, TextAlignmentCenter, &labelSprite, "NOZ"},  // NOZT
   {176, 38,  globalOffsetX + 566, globalOffsetY + 56,  TextAlignmentRight, &fuelSprite, "12345"}, // FUELU
   {176, 38,  globalOffsetX + 566, globalOffsetY + 132,  TextAlignmentRight, &fuelSprite, "67890"}, // FUELL
@@ -122,56 +125,107 @@ DisplayElement displayElements[] = {
 
 //################ Create sprites ###############################
 
+// Nozzle pointer pivot points (sprite coordinates, inferred from BMP analysis)
+static const float NOZL_PIVOT_X     = 6.2f;
+static const float NOZL_PIVOT_Y     = 8.4f;
+static const float NOZR_PIVOT_X     = 143.1f;
+static const float NOZR_PIVOT_Y     = 8.6f;
+// Degrees of needle rotation per 1 % of nozzle opening (measured from BMP data)
+static const float NOZ_DEG_PER_PCT_L = 0.897f;
+static const float NOZ_DEG_PER_PCT_R = 0.892f;
+
 //Create a sprite for each possible pointer nozzel pointer position from an image, located within LITTLEFS and store it in Psram
 //additionl sprites for scale and scale numbers as well as a blank sprite
 void createImageSprite() {
-  int j = 0;
-  //Left Nozzel White
-  for (int i = 0; i <= 120; i += 10){
-    String filename = "/White/L" + String(i) + ".bmp";
-    leftNozzleSprites[j].setPsram(true);
-    leftNozzleSprites[j].setColorDepth(24);
-    leftNozzleSprites[j].createFromBmp(LittleFS, filename.c_str());
+  auto loadBmp = [&](LGFX_Sprite& sprite, const String& filename) {
+    sprite.setPsram(true);
+    sprite.setColorDepth(24);
+    sprite.createFromBmp(LittleFS, filename.c_str());
+  };
 
-    j++;
-  }
-  //Left Nozzel Green
-  for (int i = 0; i <= 120; i += 10){
-    String filename = "/Green/L" + String(i) + ".bmp";
-    leftNozzleSprites[j].setPsram(true);
-    leftNozzleSprites[j].setColorDepth(24);
-    leftNozzleSprites[j].createFromBmp(LittleFS, filename.c_str());
-    j++;
-  }
-  //Black sprite to hide nozzel gauge
-  leftNozzleSprites[j].setPsram(true);
-  leftNozzleSprites[j].setColorDepth(24);
-  leftNozzleSprites[j].createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
-  leftNozzleSprites[j].fillScreen(0x000000U);
+  loadBmp(leftNozzleSprites[NOZ_NEEDLE_DAY],  "/White/L0.bmp");
+  loadBmp(leftNozzleSprites[NOZ_NUMBERS_DAY], "/White/L110.bmp");
+  loadBmp(leftNozzleSprites[NOZ_SCALE_DAY],   "/White/L120.bmp");
+  loadBmp(leftNozzleSprites[NOZ_NEEDLE_NIGHT],  "/Green/L0.bmp");
+  loadBmp(leftNozzleSprites[NOZ_NUMBERS_NIGHT], "/Green/L110.bmp");
+  loadBmp(leftNozzleSprites[NOZ_SCALE_NIGHT],   "/Green/L120.bmp");
 
-  j = 0;
-  //Right Nozzel White
-  for (int k = 0; k <= 120; k += 10){
-    String filename = "/White/R" + String(k) + ".bmp";
-    rightNozzleSprites[j].setPsram(true);
-    rightNozzleSprites[j].setColorDepth(24);
-    rightNozzleSprites[j].createFromBmp(LittleFS,filename.c_str());
-    j++;
+  loadBmp(rightNozzleSprites[NOZ_NEEDLE_DAY],  "/White/R0.bmp");
+  loadBmp(rightNozzleSprites[NOZ_NUMBERS_DAY], "/White/R110.bmp");
+  loadBmp(rightNozzleSprites[NOZ_SCALE_DAY],   "/White/R120.bmp");
+  loadBmp(rightNozzleSprites[NOZ_NEEDLE_NIGHT],  "/Green/R0.bmp");
+  loadBmp(rightNozzleSprites[NOZ_NUMBERS_NIGHT], "/Green/R110.bmp");
+  loadBmp(rightNozzleSprites[NOZ_SCALE_NIGHT],   "/Green/R120.bmp");
+
+  leftNozzleSprites[NOZ_BLANK].setPsram(true);
+  leftNozzleSprites[NOZ_BLANK].setColorDepth(24);
+  leftNozzleSprites[NOZ_BLANK].createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
+  leftNozzleSprites[NOZ_BLANK].fillScreen(0x000000U);
+
+  rightNozzleSprites[NOZ_BLANK].setPsram(true);
+  rightNozzleSprites[NOZ_BLANK].setColorDepth(24);
+  rightNozzleSprites[NOZ_BLANK].createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
+  rightNozzleSprites[NOZ_BLANK].fillScreen(0x000000U);
+
+  leftNozzleSprites[NOZ_NEEDLE_DAY].setPivot(NOZL_PIVOT_X, NOZL_PIVOT_Y);
+  leftNozzleSprites[NOZ_NEEDLE_NIGHT].setPivot(NOZL_PIVOT_X, NOZL_PIVOT_Y);
+  rightNozzleSprites[NOZ_NEEDLE_DAY].setPivot(NOZR_PIVOT_X, NOZR_PIVOT_Y);
+  rightNozzleSprites[NOZ_NEEDLE_NIGHT].setPivot(NOZR_PIVOT_X, NOZR_PIVOT_Y);
+
+  leftNozzleBg.setPsram(true);
+  leftNozzleBg.setColorDepth(24);
+  leftNozzleBg.createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
+  leftNozzleBg.fillScreen(0x000000U);
+
+  rightNozzleBg.setPsram(true);
+  rightNozzleBg.setColorDepth(24);
+  rightNozzleBg.createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
+  rightNozzleBg.fillScreen(0x000000U);
+
+  leftNozzleComposite.setPsram(true);
+  leftNozzleComposite.setColorDepth(24);
+  leftNozzleComposite.createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
+
+  rightNozzleComposite.setPsram(true);
+  rightNozzleComposite.setColorDepth(24);
+  rightNozzleComposite.createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
+}
+
+static void renderNozzleCommon(DisplayElement nozzle,
+                               int extNozzlePos,
+                               uint8_t pointerTex,
+                               uint8_t scaleTex,
+                               uint8_t n100Tex,
+                               LGFX_Sprite* sprites,
+                               LGFX_Sprite& bg,
+                               LGFX_Sprite& composite,
+                               float pivotX,
+                               float pivotY,
+                               float degPerPct,
+                               bool invertAngle) {
+  float pct = (extNozzlePos / 65535.0f) * 100.0f;
+  float angle = pct * degPerPct;
+  if (invertAngle) {
+    angle = -angle;
   }
 
-  //Right Nozzel Green
-  for (int k = 0; k <= 120; k += 10){
-    String filename = "/Green/R" + String(k) + ".bmp";
-    rightNozzleSprites[j].setPsram(true);
-    rightNozzleSprites[j].setColorDepth(24);
-    rightNozzleSprites[j].createFromBmp(LittleFS,filename.c_str());
-    j++;
+  int spriteOffset = ifeiColor == COLOR_DAY ? NOZ_NEEDLE_DAY : NOZ_NEEDLE_NIGHT;
+
+  bg.fillScreen(0x000000U);
+  if (n100Tex == 1) {
+    sprites[(ifeiColor == COLOR_DAY) ? NOZ_NUMBERS_DAY : NOZ_NUMBERS_NIGHT].pushSprite(&bg, 0, 0, 0x000000U);
   }
-  //Black sprite to hide nozzel gauge
-  rightNozzleSprites[j].setPsram(true);
-  rightNozzleSprites[j].setColorDepth(24);
-  rightNozzleSprites[j].createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
-  rightNozzleSprites[j].fillScreen(0x000000U);
+  if (scaleTex == 1) {
+    sprites[(ifeiColor == COLOR_DAY) ? NOZ_SCALE_DAY : NOZ_SCALE_NIGHT].pushSprite(&bg, 0, 0, 0x000000U);
+  }
+
+  bg.pushSprite(&composite, 0, 0);
+  if (pointerTex == 1) {
+    LGFX_Sprite* needle = &sprites[spriteOffset];
+    needle->pushRotateZoom(&composite, pivotX, pivotY, angle, 1.0f, 1.0f, 0x000000U);
+  }
+
+  composite.pushSprite(nozzle.posX, nozzle.posY);
 }
 
 //create sprites for digital display areas and text lables; Fonts loaded from littlefs
@@ -274,44 +328,34 @@ bool isStringEmpty(const char* str) {
 
 void renderNozzleLeft(IfeiMessage message) {
   DisplayElement nozzle = displayElements[NOZL];
-  int value = map(message.extNozzlePosL, 0, 65535, 0, 100);
-  int spriteOffset = ifeiColor == COLOR_DAY ? 0 : 13;
-  if (value < 5) {
-    strcpy(nozzle.value, "0");
-  } else {
-    strcpy(nozzle.value, String((value - 5) / 10 + 1).c_str());
-  }
-  nozzle.sprite = &leftNozzleSprites[atoi(nozzle.value) + spriteOffset];
-  if (message.lPointerTex == 1) {
-    nozzle.sprite->pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
-  if (message.lScaleTex == 1) {
-    leftNozzleSprites[12 + spriteOffset].pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
-  if (message.l100Tex == 1) {
-    leftNozzleSprites[11 + spriteOffset].pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
+  renderNozzleCommon(nozzle,
+                    message.extNozzlePosL,
+                    message.lPointerTex,
+                    message.lScaleTex,
+                    message.l100Tex,
+                    leftNozzleSprites,
+                    leftNozzleBg,
+                    leftNozzleComposite,
+                    NOZL_PIVOT_X,
+                    NOZL_PIVOT_Y,
+                    NOZ_DEG_PER_PCT_L,
+                    false);
 }
 
 void renderNozzleRight(IfeiMessage message) {
   DisplayElement nozzle = displayElements[NOZR];
-  int value = map(message.extNozzlePosR, 0, 65535, 0, 100);
-  int spriteOffset = ifeiColor == COLOR_DAY ? 0 : 13;
-  if (value < 5) {
-    strcpy(nozzle.value, "0");
-  } else {
-    strcpy(nozzle.value, String((value - 5) / 10 + 1).c_str());
-  }
-  nozzle.sprite = &rightNozzleSprites[atoi(nozzle.value) + spriteOffset];
-  if (message.rPointerTex == 1) {
-    nozzle.sprite->pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
-  if (message.rScaleTex == 1) {
-    rightNozzleSprites[12 + spriteOffset].pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
-  if (message.r100Tex == 1) {
-    rightNozzleSprites[11 + spriteOffset].pushSprite(nozzle.posX, nozzle.posY, 0x000000U);
-  }
+  renderNozzleCommon(nozzle,
+                    message.extNozzlePosR,
+                    message.rPointerTex,
+                    message.rScaleTex,
+                    message.r100Tex,
+                    rightNozzleSprites,
+                    rightNozzleBg,
+                    rightNozzleComposite,
+                    NOZR_PIVOT_X,
+                    NOZR_PIVOT_Y,
+                    NOZ_DEG_PER_PCT_R,
+                    true);
 }
 
 void renderClock(DisplayElement element, String& hours, String& minutes, String& seconds, char dp1, char dp2) {
@@ -366,8 +410,7 @@ void renderClocks(IfeiMessage message) {
   } else if (message.clockS < 10) {
     seconds = "0" + seconds;
   }
-  Serial.println((char)message.dd1);
-  renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
+  Serial.println((char)message.dd1);  renderClock(displayElements[CLOCKU], hours, minutes, seconds, (char)message.dd1, (char)message.dd2);
 
   // TODO: timer could show as " : : "
   hours = String(message.timerH);
