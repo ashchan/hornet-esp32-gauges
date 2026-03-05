@@ -60,7 +60,8 @@
 #include <stdlib.h>
 
 enum class DcsState {
-  EXITED,       // DCS not running, in menu, or crashed
+  EXITED,       // DCS not running, in menu
+  HUNG,         // DCS hung/crashed, or left unmanned
   PAUSED,       // Mission loaded but paused (no heartbeat for 10s)
   GROUND_COLD,  // On ground, at least one engine below 50% RPM
   GROUND_HOT,   // On ground, both engines above 50% RPM
@@ -111,9 +112,14 @@ DcsState getDcsState() {
   // Check if aircraft name is empty (DCS in menu or not running)
   bool hasAircraft = (acftName[0] != '\0');
 
-  // ── EXITED: No aircraft OR timeout exceeded (crash detection) ──
-  if (!hasAircraft || timeSinceUpdate >= EXITED_TIMEOUT_MS) {
+  // ── EXITED: No aircraft
+  if (!hasAircraft) {
     return DcsState::EXITED;
+  }
+
+  // Timeout exceeded (crash detection, unmanned for long time)
+  if (timeSinceUpdate >= EXITED_TIMEOUT_MS) {
+    return DcsState::HUNG;
   }
 
   // ── PAUSED: Aircraft loaded but heartbeat stalled ──
@@ -154,8 +160,9 @@ bool checkDcsRunning() {
 void onDcsUpdateCounterChange(unsigned int newValue) {
   currDcsHeartbeat = newValue;
 }
-DcsBios::IntegerBuffer dcsUpdateCounterBuffer(0xfffe, 0x00ff, 0, onDcsUpdateCounterChange);
+DcsBios::IntegerBuffer dcsUpdateCounterBuffer(MetadataEnd_UPDATE_COUNTER, onDcsUpdateCounterChange);
 
+/*
 // Aircraft name - empty when no mission or DCS in menu
 void onAcftNameChange(char* newValue) {
   if (newValue != nullptr && newValue[0] != '\0') {
@@ -178,6 +185,7 @@ void onIfeiRpmRChange(char* newValue) {
   rpmRight = (newValue != nullptr && newValue[0] != '\0') ? atoi(newValue) : 0;
 }
 DcsBios::StringBuffer<3> ifeiRpmRBuffer(FA_18C_hornet_IFEI_RPM_R_A, onIfeiRpmRChange);
+*/
 
 // Weight on wheels - left gear (1=on ground, 0=airborne)
 void onExtWowLeftChange(unsigned int newValue) {
@@ -190,5 +198,23 @@ void onExtWowRightChange(unsigned int newValue) {
   wowRight = newValue;
 }
 DcsBios::IntegerBuffer extWowRightBuffer(FA_18C_hornet_EXT_WOW_RIGHT, onExtWowRightChange);
+
+// Added for use in dcsbios_handler.h
+void setAcftName(char* newValue) {
+  if (newValue != nullptr && newValue[0] != '\0') {
+    strncpy(acftName, newValue, sizeof(acftName) - 1);
+    acftName[sizeof(acftName) - 1] = '\0';
+  } else {
+    acftName[0] = '\0';
+  }
+}
+
+void setRpmRight(char* newValue) {
+  rpmRight = (newValue != nullptr && newValue[0] != '\0') ? atoi(newValue) : 0;
+}
+
+void setRpmLeft(char* newValue) {
+  rpmLeft = (newValue != nullptr && newValue[0] != '\0') ? atoi(newValue) : 0;
+}
 
 #endif // DCS_STATE_CHECKER_H
