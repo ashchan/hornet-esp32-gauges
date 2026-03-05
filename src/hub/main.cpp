@@ -6,6 +6,7 @@
 
 #include "message.h"
 #include "dcsbios_handler.h"
+#include "DCS_State_Checker.h"
 
 static void addPeer(const uint8_t mac[6]) {
   esp_now_peer_info_t peer{};
@@ -46,12 +47,6 @@ static void sendIntegerMessage(ValueName name, uint16_t value) {
   sendMessage(m);
 }
 
-void setup() {
-  DcsBios::setup();
-  initEspNow();
-  delay(300);
-}
-
 static MissionType previousMissionType = MissionType::Other;
 static IfeiMessage previousIfei{};
 static AltimeterMessage previousAltimeter{};
@@ -73,15 +68,23 @@ static const uint32_t ifeiMessageInterval = 100;
 static const uint32_t periodicMessageInterval = 5000;
 static uint32_t lastSendAt = 0;
 static uint32_t lastIfeiSendAt = 0;
-static uint32_t lastPeriodicSendAt = 0; // To resend values that seldom change and might be missed (e.g. hyd pressure, battery, hyd indicator brake)
+
+void setup() {
+  DcsBios::setup();
+  initEspNow();
+  delay(300);
+  ifeiShowGameInfo();
+}
 
 void loop() {
   DcsBios::loop();
 
   const uint32_t now = millis();
+  DcsState dcsState = getDcsState();
 
-  if (missionType != previousMissionType) {
-    // Any cleanup?
+  if (dcsState == DcsState::HUNG) {
+    cleanup();
+    ifeiShowGameInfo();
   }
 
   // Limit IFEI refresh rate due to its data size and update frequency
@@ -90,12 +93,6 @@ void loop() {
     previousIfei.header.ms = millis();
     sendMessage(previousIfei);
     lastIfeiSendAt = now;
-  }
-
-  bool periodicSend = previousMissionType == MissionType::Hornet && now - lastPeriodicSendAt > periodicMessageInterval;
-  periodicSend = false; // Disable for now, need to check if this is really necessary
-  if (periodicSend) {
-    lastPeriodicSendAt = now;
   }
 
   if (now - lastSendAt > messageInterval) {
@@ -142,32 +139,32 @@ void loop() {
       sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
     }
 
-    if (voltU != previousVoltU || periodicSend) {
+    if (voltU != previousVoltU) {
       previousVoltU = voltU;
       sendIntegerMessage(ValueName::VoltU, voltU);
     }
 
-    if (voltE != previousVoltE || periodicSend) {
+    if (voltE != previousVoltE) {
       previousVoltE = voltE;
       sendIntegerMessage(ValueName::VoltE, voltE);
     }
 
-    if (hydIndBrake != previousHydIndBrake || periodicSend) {
+    if (hydIndBrake != previousHydIndBrake) {
       previousHydIndBrake = hydIndBrake;
       sendIntegerMessage(ValueName::BrakePressure, hydIndBrake);
     }
 
-    if (cabinAltIndicator != previousCabinAltIndicator || periodicSend) {
+    if (cabinAltIndicator != previousCabinAltIndicator) {
       previousCabinAltIndicator = cabinAltIndicator;
       sendIntegerMessage(ValueName::CabinAltitudeIndicator, cabinAltIndicator);
     }
 
-    if (hydPressL != previousHydPressL || periodicSend) {
+    if (hydPressL != previousHydPressL) {
       previousHydPressL = hydPressL;
       sendIntegerMessage(ValueName::HydraulicPressureLeft, hydPressL);
     }
 
-    if (hydPressR != previousHydPressR || periodicSend) {
+    if (hydPressR != previousHydPressR) {
       previousHydPressR = hydPressR;
       sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
     }

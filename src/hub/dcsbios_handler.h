@@ -5,10 +5,12 @@
 #define DCSBIOS_DISABLE_SERVO
 #include <DcsBios.h>
 #include "message.h"
+#include "DCS_State_Checker.h"
 
 static MissionType missionType = MissionType::Other;
 static AltimeterMessage altimeter{};
 static RadarAltimeterMessage radarAltimeter{};
+static char dcsVersion[6];
 static IfeiMessage ifei{};
 static SaiMessage sai{};
 static uint16_t airspeed;
@@ -25,7 +27,7 @@ static uint16_t consoleLighting;
 int16_t parse16(const char *s);
 int8_t parse8(const char *s);
 
-void reset() {
+void cleanup() {
   altimeter = AltimeterMessage{};
   radarAltimeter = RadarAltimeterMessage{};
   ifei = IfeiMessage{};
@@ -42,16 +44,51 @@ void reset() {
   consoleLighting = 0;
 }
 
+// Show DCS version on IFEI timer
+void ifeiShowGameInfo() {
+  ifei = IfeiMessage{};
+
+  int major = 0;
+  int minor = 0;
+  int patch = 0;
+
+  char v[sizeof(dcsVersion)];
+  strncpy(v, dcsVersion, sizeof(v) - 1);
+  v[sizeof(v) - 1] = '\0';
+
+  char* saveptr = nullptr;
+  char* tok = strtok_r(v, ".", &saveptr);
+  if (tok) {
+    major = atoi(tok);
+    tok = strtok_r(nullptr, ".", &saveptr);
+  }
+  if (tok) {
+    minor = atoi(tok);
+    tok = strtok_r(nullptr, ".", &saveptr);
+  }
+  if (tok) {
+    patch = atoi(tok);
+  }
+
+  ifei.timerH = (major >= 0 && major <= 99) ? (int8_t)major : 0;
+  ifei.timerM = (minor >= 0 && minor <= 99) ? (int8_t)minor : 0;
+  ifei.timerS = (patch >= 0 && patch <= 99) ? (int8_t)patch : 0;
+}
+
 #pragma region DCS Common Data
+void onDcsVersionChange(char* newValue) {
+  strncpy(dcsVersion, newValue, 5);
+  dcsVersion[5] = '\0';
+}
+DcsBios::StringBuffer<6> dcsVersionBuffer(CommonData_DCS_BIOS_A, onDcsVersionChange);
+
 void onAcftNameBufferChange(char* newValue) {
-  // 2026-03-02: Do not reset here. When the next mission is started DCSBIOS will not send unchanged data.
-  // reset();
   missionType = strcmp(newValue, "FA-18C_hornet") == 0 ? MissionType::Hornet : MissionType::Other;
+  setAcftName(newValue);
 }
 DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
 
 void onCockkpitLightModeSwChange(unsigned int newValue) {
-  // TODO: other common message other than IFEI
   ifei.colorMode = newValue;
 }
 DcsBios::IntegerBuffer cockkpitLightModeSwBuffer(FA_18C_hornet_COCKKPIT_LIGHT_MODE_SW, onCockkpitLightModeSwChange);
@@ -182,11 +219,13 @@ DcsBios::IntegerBuffer radaltAltPtrBuffer(FA_18C_hornet_RADALT_ALT_PTR, onRadalt
 //################## RPM  ##################
 void onIfeiRpmLChange(char* newValue) {
   ifei.rpmL = parse8(newValue);
+  setRpmLeft(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmLBuffer(FA_18C_hornet_IFEI_RPM_L_A, onIfeiRpmLChange);
 
 void onIfeiRpmRChange(char* newValue) {
   ifei.rpmR = parse8(newValue);
+  setRpmRight(newValue);
 }
 DcsBios::StringBuffer<3> ifeiRpmRBuffer(FA_18C_hornet_IFEI_RPM_R_A, onIfeiRpmRChange);
 

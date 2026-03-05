@@ -70,10 +70,10 @@ struct __attribute__((packed)) IfeiMessage {
 
   int16_t bingo = -1;
 
-  uint8_t dd1;
-  uint8_t dd2;
-  uint8_t dd3 = 58; // ":"
-  uint8_t dd4 = 58; // ":"
+  uint8_t dd1 = 58; // ":"
+  uint8_t dd2 = 58; // ":"
+  uint8_t dd3 = 58;
+  uint8_t dd4 = 58;
 
   int16_t ffL = -1;
   int16_t ffR = -1;
@@ -131,7 +131,7 @@ struct __attribute__((packed)) SaiMessage {
   uint16_t rateOfTurn = MID_VALUE;
   uint16_t manPitchAdj = MID_VALUE;
   uint16_t pitch = MID_VALUE;
-  uint16_t attWarningFlag = MAX_VALUE;
+  uint16_t attWarningFlag = 0;
   uint16_t pointerHor = MID_VALUE;
   uint16_t pointerVer = MID_VALUE;
 };
