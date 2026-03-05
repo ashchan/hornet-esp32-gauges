@@ -73,7 +73,7 @@ static void initEspNowClient() {
         rawE = message.value;
         dirty = true;
       }
-      if (message.name == ValueName::VoltE) {
+      if (message.name == ValueName::VoltU) {
         rawU = message.value;
         dirty = true;
       }
