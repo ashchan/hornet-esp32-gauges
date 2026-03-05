@@ -33,7 +33,14 @@ static void initEspNowClient() {
 
 void setup() {
   Serial.begin(115200);
+
   initIfeiRenderer();
+
+  // Show firmware updated date (but could be difficult to track)
+  lastMessage.clockH = 26;
+  lastMessage.clockM = 3;
+  lastMessage.clockS = 5;
+
   initEspNowClient();
 }
 
