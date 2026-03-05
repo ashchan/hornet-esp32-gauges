@@ -6,8 +6,9 @@
 #include "renderer.h"
 #include "message.h"
 
-const unsigned int COLOR_DAY = 0xFFFFFFU;
+const unsigned int COLOR_DAY   = 0xFFFFFFU;
 const unsigned int COLOR_NIGHT = 0x1CDD2AU;
+const unsigned int COLOR_BG    = 0x000000U;
 unsigned int ifeiColor = COLOR_DAY;
 unsigned int ifeiBrightness = 0;
 
@@ -21,26 +22,17 @@ LGFX_Sprite labelSprite(&tft); // Text label sprite
 LGFX_Sprite fuelSprite(&tft);   // Fuel sprite
 LGFX_Sprite clockSprite(&tft);  // Clock sprite
 
-static const int NOZ_NEEDLE_DAY   = 0;
-static const int NOZ_NUMBERS_DAY  = 1;
-static const int NOZ_SCALE_DAY    = 2;
-static const int NOZ_NEEDLE_NIGHT = 3;
-static const int NOZ_NUMBERS_NIGHT = 4;
-static const int NOZ_SCALE_NIGHT  = 5;
-static const int NOZ_BLANK        = 6;
-
-LGFX_Sprite leftNozzleSprites[7] // Left nozzle gauge sprites
-    {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
-
-LGFX_Sprite rightNozzleSprites[7] // Right nozzle gauge sprites
-    {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft),
-     LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
-
-LGFX_Sprite leftNozzleBg(&tft);
-LGFX_Sprite rightNozzleBg(&tft);
+static const int NOZ_NEEDLE_DAY      = 0;
+static const int NOZ_NUMBERS_DAY     = 1;
+static const int NOZ_SCALE_DAY       = 2;
+static const int NOZ_NEEDLE_NIGHT    = 3;
+static const int NOZ_NUMBERS_NIGHT   = 4;
+static const int NOZ_SCALE_NIGHT     = 5;
+LGFX_Sprite leftNozzleSprites[6] {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
+LGFX_Sprite rightNozzleSprites[6] {LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft), LGFX_Sprite(&tft)};
 LGFX_Sprite leftNozzleComposite(&tft);
 LGFX_Sprite rightNozzleComposite(&tft);
+LGFX_Sprite nozzleBand(&tft);
 
 LGFX_Sprite tagSprite(&tft); //Special Tags sprite (L/R/Z)
 
@@ -125,13 +117,19 @@ DisplayElement displayElements[] = {
 //################ Create sprites ###############################
 
 // Nozzle pointer pivot points (sprite coordinates, inferred from BMP analysis)
-static const float NOZL_PIVOT_X     = 6.2f;
-static const float NOZL_PIVOT_Y     = 8.4f;
-static const float NOZR_PIVOT_X     = 143.1f;
-static const float NOZR_PIVOT_Y     = 8.6f;
+static const float NOZL_PIVOT_X      = 6.2f;
+static const float NOZL_PIVOT_Y      = 8.4f;
+static const float NOZR_PIVOT_X      = 143.1f;
+static const float NOZR_PIVOT_Y      = 8.6f;
 // Degrees of needle rotation per 1 % of nozzle opening (measured from BMP data)
 static const float NOZ_DEG_PER_PCT_L = 0.897f;
 static const float NOZ_DEG_PER_PCT_R = 0.892f;
+
+// Hardcode the whole sprite are of the left + right nozzles + text
+static const int NOZ_BAND_X          = 46;
+static const int NOZ_BAND_Y          = 252;
+static const int NOZ_BAND_W          = 308;
+static const int NOZ_BAND_H          = 154;
 
 //Create a sprite for each possible pointer nozzel pointer position from an image, located within LITTLEFS and store it in Psram
 //additionl sprites for scale and scale numbers as well as a blank sprite
@@ -156,30 +154,10 @@ void createImageSprite() {
   loadBmp(rightNozzleSprites[NOZ_NUMBERS_NIGHT], "/Green/R110.bmp");
   loadBmp(rightNozzleSprites[NOZ_SCALE_NIGHT],   "/Green/R120.bmp");
 
-  leftNozzleSprites[NOZ_BLANK].setPsram(true);
-  leftNozzleSprites[NOZ_BLANK].setColorDepth(24);
-  leftNozzleSprites[NOZ_BLANK].createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
-  leftNozzleSprites[NOZ_BLANK].fillScreen(0x000000U);
-
-  rightNozzleSprites[NOZ_BLANK].setPsram(true);
-  rightNozzleSprites[NOZ_BLANK].setColorDepth(24);
-  rightNozzleSprites[NOZ_BLANK].createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
-  rightNozzleSprites[NOZ_BLANK].fillScreen(0x000000U);
-
   leftNozzleSprites[NOZ_NEEDLE_DAY].setPivot(NOZL_PIVOT_X, NOZL_PIVOT_Y);
   leftNozzleSprites[NOZ_NEEDLE_NIGHT].setPivot(NOZL_PIVOT_X, NOZL_PIVOT_Y);
   rightNozzleSprites[NOZ_NEEDLE_DAY].setPivot(NOZR_PIVOT_X, NOZR_PIVOT_Y);
   rightNozzleSprites[NOZ_NEEDLE_NIGHT].setPivot(NOZR_PIVOT_X, NOZR_PIVOT_Y);
-
-  leftNozzleBg.setPsram(true);
-  leftNozzleBg.setColorDepth(24);
-  leftNozzleBg.createSprite(displayElements[NOZL].spriteWidth, displayElements[NOZL].spriteHeight);
-  leftNozzleBg.fillScreen(0x000000U);
-
-  rightNozzleBg.setPsram(true);
-  rightNozzleBg.setColorDepth(24);
-  rightNozzleBg.createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
-  rightNozzleBg.fillScreen(0x000000U);
 
   leftNozzleComposite.setPsram(true);
   leftNozzleComposite.setColorDepth(24);
@@ -188,6 +166,10 @@ void createImageSprite() {
   rightNozzleComposite.setPsram(true);
   rightNozzleComposite.setColorDepth(24);
   rightNozzleComposite.createSprite(displayElements[NOZR].spriteWidth, displayElements[NOZR].spriteHeight);
+
+  nozzleBand.setPsram(true);
+  nozzleBand.setColorDepth(24);
+  nozzleBand.createSprite(NOZ_BAND_W, NOZ_BAND_H);
 }
 
 static void renderNozzleCommon(DisplayElement nozzle,
@@ -196,7 +178,6 @@ static void renderNozzleCommon(DisplayElement nozzle,
                                uint8_t scaleTex,
                                uint8_t n100Tex,
                                LGFX_Sprite* sprites,
-                               LGFX_Sprite& bg,
                                LGFX_Sprite& composite,
                                float pivotX,
                                float pivotY,
@@ -210,21 +191,17 @@ static void renderNozzleCommon(DisplayElement nozzle,
 
   int spriteOffset = ifeiColor == COLOR_DAY ? NOZ_NEEDLE_DAY : NOZ_NEEDLE_NIGHT;
 
-  bg.fillScreen(0x000000U);
+  composite.fillScreen(COLOR_BG);
   if (n100Tex == 1) {
-    sprites[(ifeiColor == COLOR_DAY) ? NOZ_NUMBERS_DAY : NOZ_NUMBERS_NIGHT].pushSprite(&bg, 0, 0, 0x000000U);
+    sprites[(ifeiColor == COLOR_DAY) ? NOZ_NUMBERS_DAY : NOZ_NUMBERS_NIGHT].pushSprite(&composite, 0, 0, COLOR_BG);
   }
   if (scaleTex == 1) {
-    sprites[(ifeiColor == COLOR_DAY) ? NOZ_SCALE_DAY : NOZ_SCALE_NIGHT].pushSprite(&bg, 0, 0, 0x000000U);
+    sprites[(ifeiColor == COLOR_DAY) ? NOZ_SCALE_DAY : NOZ_SCALE_NIGHT].pushSprite(&composite, 0, 0, COLOR_BG);
   }
-
-  bg.pushSprite(&composite, 0, 0);
   if (pointerTex == 1) {
     LGFX_Sprite* needle = &sprites[spriteOffset];
-    needle->pushRotateZoom(&composite, pivotX, pivotY, angle, 1.0f, 1.0f, 0x000000U);
+    needle->pushRotateZoom(&composite, pivotX, pivotY, angle, 1.0f, 1.0f, COLOR_BG);
   }
-
-  composite.pushSprite(nozzle.posX, nozzle.posY);
 }
 
 //create sprites for digital display areas and text lables; Fonts loaded from littlefs
@@ -260,7 +237,7 @@ void createDisplayElements() {
 
   tagSprite.createSprite(displayElements[ZULU].spriteWidth, displayElements[ZULU].spriteHeight);
   tagSprite.loadFont(LittleFS,"/Fonts/IFEI-Labels-16.vlw");
-  tagSprite.setFont(labelSprite.getFont());
+  tagSprite.setFont(tagSprite.getFont());
   tagSprite.print(displayElements[NOZT].value);
 
   fuelSprite.createSprite(displayElements[FUELU].spriteWidth, displayElements[FUELU].spriteHeight);
@@ -332,7 +309,6 @@ void renderNozzleLeft(IfeiMessage message) {
                     message.lScaleTex,
                     message.l100Tex,
                     leftNozzleSprites,
-                    leftNozzleBg,
                     leftNozzleComposite,
                     NOZL_PIVOT_X,
                     NOZL_PIVOT_Y,
@@ -348,12 +324,41 @@ void renderNozzleRight(IfeiMessage message) {
                     message.rScaleTex,
                     message.r100Tex,
                     rightNozzleSprites,
-                    rightNozzleBg,
                     rightNozzleComposite,
                     NOZR_PIVOT_X,
                     NOZR_PIVOT_Y,
                     NOZ_DEG_PER_PCT_R,
                     true);
+}
+
+void renderNozzles(IfeiMessage message) {
+  // NOZL
+  renderNozzleLeft(message);
+  // NOZR
+  renderNozzleRight(message);
+    // Compose into one band sprite
+  nozzleBand.fillScreen(COLOR_BG);
+
+  // left nozzle goes at x=0 in the band
+  leftNozzleComposite.pushSprite(&nozzleBand, 0, 0);
+
+  // right nozzle goes at x = 204-46 = 158 in the band
+  rightNozzleComposite.pushSprite(&nozzleBand, 158, 0);
+
+  // Draw NOZ text INTO the band at its relative position
+  int nozRelX = displayElements[NOZT].posX - NOZ_BAND_X; // 172-46 = 126
+  int nozRelY = displayElements[NOZT].posY - NOZ_BAND_Y; // 320-252 = 68
+
+  const char* nozTexture = message.oilTex == 1 ? "NOZ" : "   ";
+  strcpy(displayElements[NOZT].value, nozTexture);
+
+  displayElements[NOZT].sprite->fillScreen(COLOR_BG);
+  displayElements[NOZT].sprite->setCursor(setTextAlignment(displayElements[NOZT], displayElements[NOZT].textalign), 0);
+  displayElements[NOZT].sprite->setTextColor(ifeiColor);
+  displayElements[NOZT].sprite->print(displayElements[NOZT].value);
+  displayElements[NOZT].sprite->pushSprite(&nozzleBand, nozRelX, nozRelY, COLOR_BG);
+
+  nozzleBand.pushSprite(NOZ_BAND_X, NOZ_BAND_Y);
 }
 
 void renderClock(DisplayElement element, String& hours, String& minutes, String& seconds, char dp1, char dp2) {
@@ -438,7 +443,7 @@ void initIfeiRenderer() {
 
   createDisplayElements();
   tft.setColorDepth(24);
-  tft.fillScreen(0x000000U);
+  tft.fillScreen(COLOR_BG);
 }
 
 void setNumber(int value, char* dest, unsigned int len) {
@@ -523,18 +528,13 @@ void renderIfeiMessage(IfeiMessage message) {
   setNumber(message.oilPressR, value, len);
   strcpy(displayElements[OILR].value, value);
   updateElement(displayElements[OILR]);
-  // NOZL
-  renderNozzleLeft(message);
-  // NOZR
-  renderNozzleRight(message);
-  // OILT & NOZT
+
+  renderNozzles(message);
+
+  // OILT
   const char* oilTexture = message.oilTex == 1 ? "OIL" : "   ";
   strcpy(displayElements[OILT].value, oilTexture);
   updateElement(displayElements[OILT]);
-  const char* nozTexture = message.oilTex == 1 ? "NOZ" : "   ";
-  // Nozzle needles are always redrawn, NOZT should be redrawn otherwise will be removed
-  strcpy(displayElements[NOZT].value, nozTexture);
-  updateElement(displayElements[NOZT]);
   // FUELU
   copyTrimLeft(value, len, message.fuelUp);
   strcpy(displayElements[FUELU].value, value);
