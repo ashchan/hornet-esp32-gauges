@@ -451,11 +451,14 @@ void setNumber(int value, char* dest, unsigned int len) {
 
 void renderIfeiMessage(IfeiMessage message) {
   ifeiColor = message.colorMode == 0 ? COLOR_DAY : COLOR_NIGHT;
-
-  unsigned int brightness = map(message.dispIntLt, 0, 65535, 0, 255);
-  if (brightness != ifeiBrightness) {
-    ifeiBrightness = brightness;
-    tft.setBrightness(ifeiBrightness);
+  if (ifeiColor == COLOR_DAY) {
+      tft.setBrightness(150); // Not adjustable
+  } else {
+    unsigned int brightness = map(message.dispIntLt, 0, 65535, 0, 255);
+    if (brightness != ifeiBrightness) {
+      ifeiBrightness = brightness;
+      tft.setBrightness(ifeiBrightness);
+    }
   }
 
   char value[8];
