@@ -115,8 +115,8 @@ DisplayElement displayElements[] = {
   {176, 38,  globalOffsetX + 566, globalOffsetY + 132,  TextAlignmentRight, &fuelSprite, "67890"}, // FUELL
   {176, 38,  globalOffsetX + 566, globalOffsetY + 246, TextAlignmentRight, &fuelSprite, "500"},  // BINGO
   {58,  18,  globalOffsetX + 648, globalOffsetY + 215, TextAlignmentCenter, &labelSprite, "BINGO"}, // BINGOT
-  {176, 35,  globalOffsetX + 566, globalOffsetY + 378, TextAlignmentRight, &clockSprite, ""}, // CLOCKU
-  {176, 35,  globalOffsetX + 566, globalOffsetY + 440, TextAlignmentRight, &clockSprite, ""}, // CLOCKL
+  {176, 35,  globalOffsetX + 575, globalOffsetY + 378, TextAlignmentRight, &clockSprite, ""}, // CLOCKU
+  {176, 35,  globalOffsetX + 575, globalOffsetY + 440, TextAlignmentRight, &clockSprite, ""}, // CLOCKL
   {18,  18,  globalOffsetX + 742, globalOffsetY + 392, TextAlignmentCenter, &tagSprite, "Z"}, // ZULU Tag
   {18,  18,  globalOffsetX + 736, globalOffsetY + 50,  TextAlignmentCenter, &tagSprite, "L"},  // L Tag
   {18,  18,  globalOffsetX + 736, globalOffsetY + 105, TextAlignmentCenter, &tagSprite, "R"}, // R Tag
