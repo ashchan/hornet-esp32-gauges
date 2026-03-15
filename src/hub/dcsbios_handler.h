@@ -10,7 +10,7 @@
 static MissionType missionType = MissionType::Other;
 static AltimeterMessage altimeter{};
 static RadarAltimeterMessage radarAltimeter{};
-static char dcsVersion[6];
+static char dcsVersion[24];
 static IfeiMessage ifei{};
 static SaiMessage sai{};
 static uint16_t airspeed;
@@ -77,16 +77,18 @@ void ifeiShowGameInfo() {
 
 #pragma region DCS Common Data
 void onDcsVersionChange(char* newValue) {
-  strncpy(dcsVersion, newValue, 5);
-  dcsVersion[5] = '\0';
+  strncpy(dcsVersion, newValue, 24);
+  dcsVersion[23] = '\0';
 }
-DcsBios::StringBuffer<6> dcsVersionBuffer(CommonData_DCS_BIOS_A, onDcsVersionChange);
+// TODO: wait for DCS-BIOS library new version to support CommonData_VERSION_A: 0x0466
+// CommonData_VERSION_A was added from DCS-BIOS v0.11.2
+DcsBios::StringBuffer<24> dcsVersionBuffer(0x0466, onDcsVersionChange);
 
 void onAcftNameBufferChange(char* newValue) {
   missionType = strcmp(newValue, "FA-18C_hornet") == 0 ? MissionType::Hornet : MissionType::Other;
   setAcftName(newValue);
 }
-DcsBios::StringBuffer<16> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
+DcsBios::StringBuffer<24> AcftNameBuffer(MetadataStart_ACFT_NAME_A, onAcftNameBufferChange);
 
 void onCockkpitLightModeSwChange(unsigned int newValue) {
   ifei.colorMode = newValue;
