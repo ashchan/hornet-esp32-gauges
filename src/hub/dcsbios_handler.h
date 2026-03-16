@@ -530,69 +530,49 @@ DcsBios::IntegerBuffer saiPointerVerBuffer(FA_18C_hornet_SAI_POINTER_VER, onSaiP
 
 #pragma region Helpers
 int16_t parse16(const char *s) {
-  if (!s) {
-    return 0;
-  }
+  if (!s) return -1;
 
-  // skip leading spaces
-  while (*s == ' ' || *s == '\t') {
-    ++s;
-  }
-
-  if (*s == '\0') {
-    return -1;
-  }
+  while (*s == ' ' || *s == '\t') ++s;
+  if (*s == '\0') return -1;
 
   int32_t v = 0;
   bool any = false;
 
   while (*s >= '0' && *s <= '9') {
     any = true;
-    v = v * 10 + (int32_t)(*s - '0');
-    if (v > 65535) {
-      v = 65535; // clamp to uint16_t max
+    v = v * 10 + (*s - '0');
+    if (v > 32767) {
+      v = 32767;
       break;
     }
     ++s;
   }
 
-  if (!any) {
-    return 0; // no digits found
-  }
+  if (!any) return -1;
 
   return (int16_t)v;
 }
 
 int8_t parse8(const char *s) {
-  if (!s) {
-    return 0;
-  }
+  if (!s) return -1;
 
-  // skip leading spaces
-  while (*s == ' ' || *s == '\t') {
-    ++s;
-  }
+  while (*s == ' ' || *s == '\t') ++s;
+  if (*s == '\0') return -1;
 
-  if (*s == '\0') {
-    return -1;
-  }
-
-  int16_t v = 0;
+  int v = 0;
   bool any = false;
 
   while (*s >= '0' && *s <= '9') {
     any = true;
-    v = (int16_t)(v * 10 + (int16_t)(*s - '0'));
-    if (v > 255) {
-      v = 255; // clamp to uint8_t max
+    v = v * 10 + (*s - '0');
+    if (v > 127) {
+      v = 127;
       break;
     }
     ++s;
   }
 
-  if (!any) {
-    return 0; // no digits found
-  }
+  if (!any) return -1;
 
   return (int8_t)v;
 }
