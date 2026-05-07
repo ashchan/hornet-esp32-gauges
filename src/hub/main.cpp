@@ -20,7 +20,7 @@ static void addPeer(const uint8_t mac[6]) {
 static uint8_t BROADCAST_MAC[6] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF }; // Broadcast address
 
 static constexpr size_t ESPNOW_MAX_PAYLOAD = 250;
-static constexpr uint8_t TX_QUEUE_CAP = 12;
+static constexpr uint8_t TX_QUEUE_CAP = 24;
 
 struct TxPacket {
   uint16_t key;
@@ -222,42 +222,10 @@ void loop() {
       sendIntegerMessage(ValueName::ConsoleLighting, consoleLighting);
     }
 
-    if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
-      previousAltimeter = altimeter;
-      previousAltimeter.header.ms = millis();
-      sendMessage(previousAltimeter);
-    }
-
     if (!isEqualRadarAltimeterMessage(radarAltimeter, previousRadarAltimeter)) {
       previousRadarAltimeter = radarAltimeter;
       previousRadarAltimeter.header.ms = millis();
       sendMessage(previousRadarAltimeter);
-    }
-
-    if (!isEqualSaiMessage(sai, previousSai)) {
-      previousSai = sai;
-      previousSai.header.ms = millis();
-      sendMessage(previousSai);
-    }
-
-    if (airspeed != previousAirspeed) {
-      previousAirspeed = airspeed;
-      sendIntegerMessage(ValueName::Airspeed, airspeed);
-    }
-
-    if (vsi != previousVsi) {
-      previousVsi = vsi;
-      sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
-    }
-
-    if (voltU != previousVoltU) {
-      previousVoltU = voltU;
-      sendIntegerMessage(ValueName::VoltU, voltU);
-    }
-
-    if (voltE != previousVoltE) {
-      previousVoltE = voltE;
-      sendIntegerMessage(ValueName::VoltE, voltE);
     }
 
     if (hydIndBrake != previousHydIndBrake) {
@@ -278,6 +246,38 @@ void loop() {
     if (hydPressR != previousHydPressR) {
       previousHydPressR = hydPressR;
       sendIntegerMessage(ValueName::HydraulicPressureRight, hydPressR);
+    }
+
+    if (voltU != previousVoltU) {
+      previousVoltU = voltU;
+      sendIntegerMessage(ValueName::VoltU, voltU);
+    }
+
+    if (voltE != previousVoltE) {
+      previousVoltE = voltE;
+      sendIntegerMessage(ValueName::VoltE, voltE);
+    }
+
+    if (!isEqualAltimeterMessage(altimeter, previousAltimeter)) {
+      previousAltimeter = altimeter;
+      previousAltimeter.header.ms = millis();
+      sendMessage(previousAltimeter);
+    }
+
+    if (!isEqualSaiMessage(sai, previousSai)) {
+      previousSai = sai;
+      previousSai.header.ms = millis();
+      sendMessage(previousSai);
+    }
+
+    if (airspeed != previousAirspeed) {
+      previousAirspeed = airspeed;
+      sendIntegerMessage(ValueName::Airspeed, airspeed);
+    }
+
+    if (vsi != previousVsi) {
+      previousVsi = vsi;
+      sendIntegerMessage(ValueName::VerticalVelocityIndicator, vsi);
     }
 
     lastSendAt = now;
