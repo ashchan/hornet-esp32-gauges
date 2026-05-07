@@ -63,5 +63,9 @@ The following gauges require the filesystem image to be built and uploaded (in a
 
 Require hardware modification to the IFEI display. See [IFEI README](src/ifei/README.md) for details.
 
+## Component Guides
+
+Check second-level README files under `src/` for component-specific setup notes and guides, such as [Hub README](src/hub/README.md) and [IFEI README](src/ifei/README.md).
+
 ## License
 This project is licensed under a [Custom Non-Commercial License](LICENSE). You can use and modify it for **personal and educational purposes only**. For commercial use, please contact the authors for permission.
