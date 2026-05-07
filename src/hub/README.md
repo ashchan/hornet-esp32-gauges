@@ -28,3 +28,32 @@ Close DCS-BIOS, serial monitors, or any other program using the hub serial port 
 ## Runtime Serial
 
 The `hub` environment enables USB CDC on boot so DCS-BIOS can connect to the board as a USB serial device.
+
+## ESP-NOW Signal Strength
+
+If one or more gauges do not update reliably from the ESP32-S3-Zero hub, especially when the same gauges work with a larger ESP32-S3 hub board, increase the hub's ESP-NOW transmit power in the `hub` environment:
+
+```ini
+[env:hub]
+build_flags =
+  -DARDUINO_USB_CDC_ON_BOOT=1
+  -DESP_MAX_TX_POWER=60
+```
+
+`esp_wifi_set_max_tx_power()` uses 0.25 dBm units, and values are rounded into supported power levels:
+
+| Value | TX power |
+| ---: | ---: |
+| 8 | 2 dBm |
+| 20 | 5 dBm |
+| 28 | 7 dBm |
+| 34 | 8.5 dBm |
+| 44 | 11 dBm |
+| 52 | 13 dBm |
+| 56 | 14 dBm |
+| 60 | 15 dBm |
+| 66 | 16.5 dBm |
+| 72 | 18 dBm |
+| 80 | 20 dBm |
+
+Start with `60` and increase only if needed.
