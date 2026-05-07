@@ -10,6 +10,7 @@ This project primarily uses the Waveshare ESP32-S3-LCD-1.85, SP32-S3-LCD-1.28 an
 
 A dedicated Gateway / Hub ESP32-S3 board communicates with DCS-BIOS, receiving all required aircraft data.
 The hub then broadcasts this data in a custom format to multiple gauge ESP32 clients wirelessly using [ESP-NOW](https://www.espressif.com/en/solutions/low-power-solutions/esp-now).
+The Gateway / Hub is designed for the compact [Waveshare ESP32-S3-Zero](https://www.waveshare.com/wiki/ESP32-S3-Zero) board with 4MB flash and 2MB PSRAM.
 
 Each client listens only to the data it needs and renders the corresponding gauge on its display.
 
