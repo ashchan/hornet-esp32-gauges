@@ -27,7 +27,7 @@ To build the software:
 3. Install [PlatformIO IDE](https://platformio.org/platformio-ide) as a Visual Studio Code extension.
 4. Clone this repository:
    ```sh
-   git clone git@github.com:ashchan/hornet-esp32-gauges.git
+   git clone https://github.com/ashchan/hornet-esp32-gauges.git
    ```
 5. Open the cloned repository in Visual Studio Code:
    ```sh
