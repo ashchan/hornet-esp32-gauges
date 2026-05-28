@@ -18,6 +18,68 @@ With this architecture:
 * Only the gateway board needs to connect to the DCS PC as a USB serial (COM) device.
 * All gauge clients use their USB ports for power only, with no direct PC connection required.
 
+## Getting Started
+
+To build the software:
+
+1. Install [Git](https://git-scm.com/).
+2. Install [Visual Studio Code](https://code.visualstudio.com/).
+3. Install [PlatformIO IDE](https://platformio.org/platformio-ide) as a Visual Studio Code extension.
+4. Clone this repository:
+   ```sh
+   git clone git@github.com:ashchan/hornet-esp32-gauges.git
+   ```
+5. Open the cloned repository in Visual Studio Code:
+   ```sh
+   cd hornet-esp32-gauges
+   code .
+   ```
+6. Build the hub firmware with PlatformIO:
+   1. Wait for Visual Studio Code to finish opening the project. PlatformIO may take a minute to detect `platformio.ini` and install project tools the first time.
+   2. Click the PlatformIO icon in the Visual Studio Code Activity Bar. It looks like an alien head.
+   3. In the PlatformIO sidebar, expand `PROJECT TASKS`.
+   4. Expand `hub`. This is the environment for the Waveshare ESP32-S3-Zero Gateway / Hub board.
+   5. Click `Build`.
+   6. Wait for the build to finish. A successful build ends with `SUCCESS` in the terminal.
+
+   If you are using a larger ESP32-S3 board instead of the Waveshare ESP32-S3-Zero, expand `hub-s3` and run `Build` there instead.
+
+7. To upload the hub firmware to the board:
+   1. Connect the hub board to the computer with a USB cable.
+   2. In the PlatformIO sidebar, expand `PROJECT TASKS` > `hub`.
+   3. Click `Upload`.
+   4. Wait for PlatformIO to compile and upload the firmware.
+
+   If upload fails because PlatformIO cannot connect to the ESP32-S3, see the [Hub README](src/hub/README.md#uploading).
+
+8. Build or upload the other gauges the same way:
+   1. In the PlatformIO sidebar, expand `PROJECT TASKS`.
+   2. Expand the environment for the sub-project you want to build, such as `airspeed`, `altimeter`, `ifei`, or `sari`.
+   3. Click `Build` to compile that firmware.
+   4. Connect the matching ESP32 board over USB.
+   5. Click `Upload` for that same environment to flash the firmware to the board.
+
+## Filesystem Image Required
+
+The following gauges require the filesystem image to be built and uploaded in addition to uploading the firmware:
+
+- **IFEI**
+- **Standby Attitude and Roll Indicator Gauge**
+
+To build and upload a filesystem image:
+
+1. Connect the matching ESP32 board to the computer with a USB cable.
+2. In Visual Studio Code, click the PlatformIO icon in the Activity Bar.
+3. In the PlatformIO sidebar, expand `PROJECT TASKS`.
+4. Expand the environment for the gauge you are setting up:
+   - Use `ifei` for the IFEI.
+   - Use `sari` for the Standby Attitude and Roll Indicator Gauge.
+5. Click `Build Filesystem Image`.
+6. Wait for the terminal to show `SUCCESS`.
+7. Click `Upload Filesystem Image`.
+8. Wait for PlatformIO to upload the filesystem image to the board.
+9. Click `Upload` for the same environment to upload the firmware if you have not already done so.
+
 ## Credit
 
 The original gauge rendering implementations were created by:
@@ -51,13 +113,6 @@ The following projects and resources were used as references or starting points:
 * Brake Pressure Gauge
   - [shef-code/F-18_BrakePressure_Gauge](https://github.com/shef-code/F-18_BrakePressure_Gauge)
   - [Example 3 – Brake Pressure Gauge](https://forum.dcs.world/topic/281538-code-sketchbook-repository-arduino-unomega-boards-dcs-bios-and-programming-helpplease-post-your-working-sketches-here/page/2/#findComment-5369303)
-
-## Filesystem Image Required
-
-The following gauges require the filesystem image to be built and uploaded (in addition to uploading the firmware):
-
-- **IFEI**
-- **Standby Attitude and Roll Indicator Gauge**
 
 ## IFEI Dimming/Backlight Control
 
