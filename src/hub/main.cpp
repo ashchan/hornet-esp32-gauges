@@ -167,6 +167,7 @@ static uint16_t previousHydPressL;
 static uint16_t previousHydPressR;
 static uint16_t previousInstrumentLighting;
 static uint16_t previousConsoleLighting;
+static uint16_t previousMagneticHeading;
 
 static const uint32_t messageInterval = 40; // 1000 / messageInterval Hz max
 static const uint32_t ifeiMessageInterval = 200;
@@ -220,6 +221,11 @@ void loop() {
     if (consoleLighting != previousConsoleLighting) {
       previousConsoleLighting = consoleLighting;
       sendIntegerMessage(ValueName::ConsoleLighting, consoleLighting);
+    }
+
+    if (magneticHeading != previousMagneticHeading) {
+      previousMagneticHeading = magneticHeading;
+      sendIntegerMessage(ValueName::MagneticHeading, magneticHeading);
     }
 
     if (!isEqualRadarAltimeterMessage(radarAltimeter, previousRadarAltimeter)) {

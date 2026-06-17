@@ -154,6 +154,7 @@ enum class ValueName : uint8_t {
   InstrumentLighting,
   ConsoleLighting,
   MissionChanged,
+  MagneticHeading,
 };
 
 static bool isEqualAltimeterMessage(const AltimeterMessage& a, const AltimeterMessage& b) {
