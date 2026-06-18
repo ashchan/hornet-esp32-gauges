@@ -193,10 +193,10 @@ DcsBios::IntegerBuffer hydPressRBuffer(FA_18C_hornet_HYD_IND_RIGHT, onHydPressRC
 #pragma endregion Hydraulics Pressure
 
 #pragma region Magnetic Heading
-void onHdgDegMagChange(unsigned int newValue) {
+void onSbyCompassHdgChange(unsigned int newValue) {
   magneticHeading = newValue;
 }
-DcsBios::IntegerBuffer hdgDegMagBuffer(CommonData_HDG_DEG_MAG, onHdgDegMagChange);
+DcsBios::IntegerBuffer sbyCompassHdgBuffer(FA_18C_hornet_SBY_COMPASS_HDG, onSbyCompassHdgChange);
 #pragma endregion Magnetic Heading
 
 #pragma region Radar Altimeter
