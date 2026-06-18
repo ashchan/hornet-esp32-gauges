@@ -16,14 +16,16 @@ constexpr int32_t kDisplayCenterY = kDisplayHeight / 2;
 constexpr int32_t kTapeBandX = 56;
 constexpr int32_t kTapeBandWidth = 84;
 constexpr int32_t kTapeWidth = kTapeBandWidth;
-constexpr int32_t kCompassCycleHeight = 1200;
-constexpr int32_t kTapeHeight = 1520;
-constexpr lv_coord_t kNorthY = 601;
+constexpr int32_t kCompassCycleHeight = 1120;
+constexpr int32_t kTapeHeight = 1440;
+constexpr lv_coord_t kNorthY = 561;
 constexpr int32_t kFlushRows = 16;
 constexpr uint16_t kBackgroundColor = 0x1082;
 constexpr uint16_t kLubberLineColor = 0xdedb;
 constexpr int32_t kLubberLineHalfThickness = 1;
 constexpr int32_t kLubberLineRows = kLubberLineHalfThickness * 2 + 1;
+constexpr int32_t kTrapezoidTopInsetPx = 14;
+constexpr int32_t kPerspectiveTopPullPx = 12;
 
 uint16_t frameBuffer[kTapeBandWidth * kDisplayHeight];
 uint16_t clearBuffer[kDisplayWidth * kFlushRows];
@@ -46,22 +48,42 @@ uint16_t normalizeBackgroundPixel(uint16_t pixel) {
   return pixel;
 }
 
+int32_t edgeFactorForDisplayY(int32_t y) {
+  const int32_t centerDistance = abs(y - kDisplayCenterY);
+  return centerDistance * centerDistance * 1000 / (kDisplayCenterY * kDisplayCenterY);
+}
+
+int32_t wrapTapeY(int32_t sourceY) {
+  while (sourceY < 0) {
+    sourceY += kCompassCycleHeight;
+  }
+  while (sourceY >= kTapeHeight) {
+    sourceY -= kCompassCycleHeight;
+  }
+
+  return sourceY;
+}
+
+int32_t perspectiveHeadingOffset(int32_t displayY, int32_t sourceX) {
+  const int32_t topWeight = (kTapeWidth - 1 - sourceX) * 1000 / (kTapeWidth - 1);
+  return (kDisplayCenterY - displayY) * kPerspectiveTopPullPx * topWeight / (kDisplayCenterY * 1000);
+}
+
 void drawTapeCrop(int32_t topY) {
   const uint16_t *tapePixels = reinterpret_cast<const uint16_t *>(standbyCompassTape_map);
   for (int32_t y = 0; y < kDisplayHeight; y++) {
-    int32_t sourceY = topY + y;
-    while (sourceY < 0) {
-      sourceY += kCompassCycleHeight;
-    }
-    while (sourceY >= kTapeHeight) {
-      sourceY -= kCompassCycleHeight;
-    }
-
-    const uint16_t *source = &tapePixels[sourceY * kTapeWidth];
     uint16_t *target = &frameBuffer[y * kTapeBandWidth];
+    const int32_t topInset = kTrapezoidTopInsetPx * edgeFactorForDisplayY(y) / 1000;
+    const int32_t projectedHeight = kTapeBandWidth - topInset;
 
     for (int32_t x = 0; x < kTapeBandWidth; x++) {
-      target[x] = normalizeBackgroundPixel(source[x]);
+      if (x < topInset) {
+        target[x] = kBackgroundColor;
+      } else {
+        const int32_t sourceX = (x - topInset) * kTapeWidth / projectedHeight;
+        const int32_t sourceY = wrapTapeY(topY + y + perspectiveHeadingOffset(y, sourceX));
+        target[x] = normalizeBackgroundPixel(tapePixels[sourceY * kTapeWidth + sourceX]);
+      }
     }
   }
 }
