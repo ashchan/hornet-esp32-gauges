@@ -10,4 +10,5 @@
 *.su
 /.cache/
 /firmware/
+/previews/
 idf_component.yml.orig
