@@ -8,11 +8,10 @@
 #include "renderer.h"
 
 static volatile uint16_t brightness = 0;
-static volatile uint16_t heading = 0; // 0-359
+static volatile uint16_t headingRaw = 0; // 0-65535
 static volatile bool dirty = true;
 static uint32_t lastFrameUs = 0;
 static const uint32_t FRAME_INTERVAL_US = 33333;  // ~30 FPS
-static uint32_t testStartUs = 0;
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -38,7 +37,7 @@ static void initEspNowClient() {
       }
       message = *reinterpret_cast<const IntegerMessage *>(data);
       if (message.name == ValueName::MagneticHeading) {
-        heading = message.value;
+        headingRaw = message.value;
         dirty = true;
       }
       break;
@@ -54,15 +53,23 @@ void setup() {
   delay(1000);
   LCD_Init();
   Renderer_Init();
-  testStartUs = micros();
-  lastFrameUs = testStartUs;
+  lastFrameUs = micros();
+
+  initEspNowClient();
 }
 
 void loop() {
   const uint32_t now = micros();
-  if (now - lastFrameUs >= FRAME_INTERVAL_US) {
+  const bool frameDue = (now - lastFrameUs) >= FRAME_INTERVAL_US;
+
+  if (dirty && frameDue) {
     lastFrameUs += FRAME_INTERVAL_US;
-    const uint32_t testHeadingCentiDegrees = ((uint64_t)(now - testStartUs) * 4500ULL / 1000000ULL) % 36000ULL;
-    Renderer_UpdateHeadingCentiDegrees(testHeadingCentiDegrees);
+
+    noInterrupts();
+    const uint16_t h = headingRaw;
+    dirty = false;
+    interrupts();
+
+    Renderer_UpdateHeadingRaw(h);
   }
 }
