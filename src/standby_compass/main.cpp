@@ -10,8 +10,9 @@
 static volatile uint16_t brightness = 0;
 static volatile uint16_t heading = 0; // 0-359
 static volatile bool dirty = true;
-static uint32_t lastFrameMs = 0;
-static const uint32_t FRAME_INTERVAL_MS = 33;  // ~30 FPS
+static uint32_t lastFrameUs = 0;
+static const uint32_t FRAME_INTERVAL_US = 33333;  // ~30 FPS
+static uint32_t testStartUs = 0;
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -50,26 +51,18 @@ static void initEspNowClient() {
 void setup() {
   Serial.begin(115200);
 
+  delay(1000);
   LCD_Init();
-  Lvgl_Init();
   Renderer_Init();
-
-  initEspNowClient();
+  testStartUs = micros();
+  lastFrameUs = testStartUs;
 }
 
 void loop() {
-  Timer_Loop();
-
-  const uint32_t now = millis();
-  const bool frameDue = (now - lastFrameMs) >= FRAME_INTERVAL_MS;
-
-  if (dirty && frameDue) {
-    noInterrupts();
-    const uint16_t h = heading;
-    const uint16_t b = brightness;
-    dirty = false;
-    interrupts();
-
-    lastFrameMs = now;
+  const uint32_t now = micros();
+  if (now - lastFrameUs >= FRAME_INTERVAL_US) {
+    lastFrameUs += FRAME_INTERVAL_US;
+    const uint32_t testHeadingCentiDegrees = ((uint64_t)(now - testStartUs) * 4500ULL / 1000000ULL) % 36000ULL;
+    Renderer_UpdateHeadingCentiDegrees(testHeadingCentiDegrees);
   }
 }
