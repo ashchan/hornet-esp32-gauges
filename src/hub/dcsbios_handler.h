@@ -23,6 +23,7 @@ static uint16_t hydPressL;
 static uint16_t hydPressR;
 static uint16_t instrumentLighting;
 static uint16_t consoleLighting;
+static uint16_t magneticHeading;
 
 int16_t parse16(const char *s);
 int8_t parse8(const char *s);
@@ -42,6 +43,7 @@ void cleanup() {
   hydPressR = 0;
   instrumentLighting = 0;
   consoleLighting = 0;
+  magneticHeading = 0;
 }
 
 // Show DCS version on IFEI timer
@@ -189,6 +191,13 @@ void onHydPressRChange(unsigned int newValue) {
 }
 DcsBios::IntegerBuffer hydPressRBuffer(FA_18C_hornet_HYD_IND_RIGHT, onHydPressRChange);
 #pragma endregion Hydraulics Pressure
+
+#pragma region Magnetic Heading
+void onSbyCompassHdgChange(unsigned int newValue) {
+  magneticHeading = newValue;
+}
+DcsBios::IntegerBuffer sbyCompassHdgBuffer(FA_18C_hornet_SBY_COMPASS_HDG, onSbyCompassHdgChange);
+#pragma endregion Magnetic Heading
 
 #pragma region Radar Altimeter
 void onRadaltMinHeightPtrChange(unsigned int newValue) {
