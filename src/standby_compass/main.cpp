@@ -12,6 +12,8 @@ static volatile uint16_t headingRaw = 0; // 0-65535
 static volatile bool dirty = true;
 static uint32_t lastFrameUs = 0;
 static const uint32_t FRAME_INTERVAL_US = 33333;  // ~30 FPS
+static const bool kTestLoopEnabled = false;
+static const uint32_t kTestHeadingRawPerSecond = 5461; // ~30 degrees/second
 
 static void initEspNowClient() {
   WiFi.mode(WIFI_STA);
@@ -55,12 +57,23 @@ void setup() {
   Renderer_Init();
   lastFrameUs = micros();
 
-  initEspNowClient();
+  if (!kTestLoopEnabled) {
+    initEspNowClient();
+  }
 }
 
 void loop() {
   const uint32_t now = micros();
   const bool frameDue = (now - lastFrameUs) >= FRAME_INTERVAL_US;
+
+  if (kTestLoopEnabled && frameDue) {
+    lastFrameUs += FRAME_INTERVAL_US;
+
+    static uint32_t testHeadingRaw = 0;
+    testHeadingRaw = (testHeadingRaw + (kTestHeadingRawPerSecond / 30)) & 0xffff;
+    Renderer_UpdateHeadingRaw((uint16_t)testHeadingRaw);
+    return;
+  }
 
   if (dirty && frameDue) {
     lastFrameUs += FRAME_INTERVAL_US;

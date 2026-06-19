@@ -23,12 +23,12 @@ BACKGROUND = (16, 16, 16)
 MARK = (255, 255, 255)
 LUBBER = (220, 220, 220)
 
-TRAPEZOID_TOP_INSET_PX = 14
+TRAPEZOID_TOP_INSET_PX = 8
 PERSPECTIVE_TOP_PULL_PX = 12
 
 TICK_START_X = 13
 TICK_FIVE_DEGREE_END_X = 22
-TICK_END_X = 34
+TICK_END_X = 28
 TICK_THIN_HALF_WIDTH = 1
 TICK_THICK_HALF_WIDTH = 2
 
@@ -41,6 +41,26 @@ def load_label_mask():
         pixels.append(byte >> 4)
         pixels.append(byte & 0x0F)
     return pixels[: TAPE_WIDTH * TAPE_HEIGHT]
+
+
+def label_alpha(mask, x, y):
+    if x < 0 or x >= TAPE_WIDTH:
+        return 0
+    return mask[(y % COMPASS_CYCLE_HEIGHT) * TAPE_WIDTH + x]
+
+
+def lightened_label_alpha(mask, x, y):
+    alpha = label_alpha(mask, x, y)
+    if alpha == 0:
+        return 0
+
+    edge_pixel = (
+        label_alpha(mask, x - 1, y) == 0
+        or label_alpha(mask, x + 1, y) == 0
+        or label_alpha(mask, x, y - 1) == 0
+        or label_alpha(mask, x, y + 1) == 0
+    )
+    return 9 if edge_pixel else alpha
 
 
 def edge_factor(display_y):
@@ -102,8 +122,8 @@ def render_ppm(heading_centi, ppm_path):
             else:
                 source_x = (x - top_inset) * TAPE_WIDTH // projected_height
                 source_y = top_y + y + perspective_heading_offset(y, source_x)
-                label_alpha = mask[(source_y % TAPE_HEIGHT) * TAPE_WIDTH + source_x]
-                pixel = blend(max(label_alpha, tick_alpha(source_x, source_y)))
+                label_alpha_value = lightened_label_alpha(mask, source_x, source_y)
+                pixel = blend(max(label_alpha_value, tick_alpha(source_x, source_y)))
             image[y][TAPE_BAND_X + x] = pixel
 
     for y in range(DISPLAY_CENTER_Y - 1, DISPLAY_CENTER_Y + 2):
